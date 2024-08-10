@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package grpc.goph_keeper.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "GophKeeper/proto/grpc/server/v1";
+
+service GophKeeperV1Service {
+  // User registration
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse);
+
+  // User authentication
+  rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse);
+
+  // Storing private data (streaming)
+  rpc StorePrivateData(stream StorePrivateDataRequest) returns (StorePrivateDataResponse);
+
+  // Synchronizing data (streaming)
+  rpc SyncData(stream SyncDataRequest) returns (SyncDataResponse);
+
+  // Requesting private data (streaming)
+  rpc RequestPrivateData(stream RequestPrivateDataRequest) returns (stream RequestPrivateDataResponse);
+}
+
+// User Registration
+message RegisterUserRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message RegisterUserResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// User Authentication
+message AuthenticateUserRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthenticateUserResponse {
+  bool success = 1;
+  string jwt_token = 2;
+  string message = 3;
+}
+
+// Storing Private Data (streaming)
+message StorePrivateDataRequest {
+  DataType data_type = 1;  // e.g., "login_password", "text", "binary", "card"
+  bytes data = 2;
+  string metadata = 3;
+}
+
+message StorePrivateDataResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Data Synchronization (streaming)
+message SyncDataRequest {
+  repeated DataEntry data_entries = 1;
+}
+
+message SyncDataResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DataEntry {
+  DataType data_type = 1;  // e.g., "login_password", "text", "binary", "card"
+  bytes data = 2;
+  string metadata = 3;
+}
+
+// Requesting Private Data (streaming)
+message RequestPrivateDataRequest {
+  DataType data_type = 2;  // e.g., "login_password", "text", "binary", "card"
+}
+
+message RequestPrivateDataResponse {
+  bool success = 1;
+  bytes data = 2;
+  string metadata = 3;
+  string message = 4;
+}
+
+// Enum for Data Types
+enum DataType {
+  DATA_TYPE_UNSPECIFIED = 0; // Default value, indicates unspecified data type
+  DATA_TYPE_LOGIN_PASSWORD = 1;
+  DATA_TYPE_TEXT = 2;
+  DATA_TYPE_BINARY = 3;
+  DATA_TYPE_CARD = 4;
+}
