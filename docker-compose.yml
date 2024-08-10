@@ -11,11 +11,11 @@ services:
     ports:
       - $APP_PG_OUT_PORT:$APP_PG_PORT
     restart: unless-stopped
-  gophkeeper:
+  goph-keeper:
     build:
       context: .
-      dockerfile: ./docker/gophKeeper
-    container_name: gophKeeper
+      dockerfile: ./docker/goph_keeper
+    container_name: goph_keeper
     env_file: .env
     ports:
       - 8000:8000
@@ -23,4 +23,4 @@ services:
       - app-db
     links:
       - app-db
-    command: sh -c "until nc -z app-db $APP_PG_PORT; do sleep 1; done && ./gophKeeper"
+    command: sh -c "until nc -z app-db $APP_PG_PORT; do sleep 1; done && ./goph_keeper"
