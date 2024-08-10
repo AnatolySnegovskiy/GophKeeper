@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  app-db:
+    image: postgres:14.5-alpine
+    container_name: app-db
+    environment:
+      - POSTGRES_PASSWORD=${APP_PG_PASS:?database password not set}
+      - PGUSER=${APP_PG_USER:?database user not set}
+      - POSTGRES_DB=$APP_DB_NAME
+    ports:
+      - $APP_PG_OUT_PORT:$APP_PG_PORT
+    restart: unless-stopped
+  gophkeeper:
+    build:
+      context: .
+      dockerfile: ./docker/gophKeeper
+    container_name: gophKeeper
+    env_file: .env
+    ports:
+      - 8000:8000
+    depends_on:
+      - app-db
+    links:
+      - app-db
+    command: sh -c "until nc -z app-db $APP_PG_PORT; do sleep 1; done && ./gophKeeper"
