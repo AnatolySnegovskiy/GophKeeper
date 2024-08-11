@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package grpc.goph_keeper.v1;
 
-import "buf/validate/validate.proto";
-
 option go_package = "GophKeeper/proto/grpc/server/v1";
 
 service GophKeeperV1Service {
@@ -20,7 +18,7 @@ service GophKeeperV1Service {
   rpc SyncData(stream SyncDataRequest) returns (SyncDataResponse);
 
   // Requesting private data (streaming)
-  rpc RequestPrivateData(stream RequestPrivateDataRequest) returns (stream RequestPrivateDataResponse);
+  rpc RequestPrivateData(RequestPrivateDataRequest) returns (stream RequestPrivateDataResponse);
 }
 
 // User Registration

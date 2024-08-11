@@ -39,7 +39,7 @@ type GophKeeperV1ServiceClient interface {
 	// Synchronizing data (streaming)
 	SyncData(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SyncDataRequest, SyncDataResponse], error)
 	// Requesting private data (streaming)
-	RequestPrivateData(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[RequestPrivateDataRequest, RequestPrivateDataResponse], error)
+	RequestPrivateData(ctx context.Context, in *RequestPrivateDataRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[RequestPrivateDataResponse], error)
 }
 
 type gophKeeperV1ServiceClient struct {
@@ -96,18 +96,24 @@ func (c *gophKeeperV1ServiceClient) SyncData(ctx context.Context, opts ...grpc.C
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type GophKeeperV1Service_SyncDataClient = grpc.ClientStreamingClient[SyncDataRequest, SyncDataResponse]
 
-func (c *gophKeeperV1ServiceClient) RequestPrivateData(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[RequestPrivateDataRequest, RequestPrivateDataResponse], error) {
+func (c *gophKeeperV1ServiceClient) RequestPrivateData(ctx context.Context, in *RequestPrivateDataRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[RequestPrivateDataResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &GophKeeperV1Service_ServiceDesc.Streams[2], GophKeeperV1Service_RequestPrivateData_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	x := &grpc.GenericClientStream[RequestPrivateDataRequest, RequestPrivateDataResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type GophKeeperV1Service_RequestPrivateDataClient = grpc.BidiStreamingClient[RequestPrivateDataRequest, RequestPrivateDataResponse]
+type GophKeeperV1Service_RequestPrivateDataClient = grpc.ServerStreamingClient[RequestPrivateDataResponse]
 
 // GophKeeperV1ServiceServer is the server API for GophKeeperV1Service service.
 // All implementations must embed UnimplementedGophKeeperV1ServiceServer
@@ -122,7 +128,7 @@ type GophKeeperV1ServiceServer interface {
 	// Synchronizing data (streaming)
 	SyncData(grpc.ClientStreamingServer[SyncDataRequest, SyncDataResponse]) error
 	// Requesting private data (streaming)
-	RequestPrivateData(grpc.BidiStreamingServer[RequestPrivateDataRequest, RequestPrivateDataResponse]) error
+	RequestPrivateData(*RequestPrivateDataRequest, grpc.ServerStreamingServer[RequestPrivateDataResponse]) error
 	mustEmbedUnimplementedGophKeeperV1ServiceServer()
 }
 
@@ -145,7 +151,7 @@ func (UnimplementedGophKeeperV1ServiceServer) StorePrivateData(grpc.ClientStream
 func (UnimplementedGophKeeperV1ServiceServer) SyncData(grpc.ClientStreamingServer[SyncDataRequest, SyncDataResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method SyncData not implemented")
 }
-func (UnimplementedGophKeeperV1ServiceServer) RequestPrivateData(grpc.BidiStreamingServer[RequestPrivateDataRequest, RequestPrivateDataResponse]) error {
+func (UnimplementedGophKeeperV1ServiceServer) RequestPrivateData(*RequestPrivateDataRequest, grpc.ServerStreamingServer[RequestPrivateDataResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method RequestPrivateData not implemented")
 }
 func (UnimplementedGophKeeperV1ServiceServer) mustEmbedUnimplementedGophKeeperV1ServiceServer() {}
@@ -220,11 +226,15 @@ func _GophKeeperV1Service_SyncData_Handler(srv interface{}, stream grpc.ServerSt
 type GophKeeperV1Service_SyncDataServer = grpc.ClientStreamingServer[SyncDataRequest, SyncDataResponse]
 
 func _GophKeeperV1Service_RequestPrivateData_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(GophKeeperV1ServiceServer).RequestPrivateData(&grpc.GenericServerStream[RequestPrivateDataRequest, RequestPrivateDataResponse]{ServerStream: stream})
+	m := new(RequestPrivateDataRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(GophKeeperV1ServiceServer).RequestPrivateData(m, &grpc.GenericServerStream[RequestPrivateDataRequest, RequestPrivateDataResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type GophKeeperV1Service_RequestPrivateDataServer = grpc.BidiStreamingServer[RequestPrivateDataRequest, RequestPrivateDataResponse]
+type GophKeeperV1Service_RequestPrivateDataServer = grpc.ServerStreamingServer[RequestPrivateDataResponse]
 
 // GophKeeperV1Service_ServiceDesc is the grpc.ServiceDesc for GophKeeperV1Service service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -257,7 +267,6 @@ var GophKeeperV1Service_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "RequestPrivateData",
 			Handler:       _GophKeeperV1Service_RequestPrivateData_Handler,
 			ServerStreams: true,
-			ClientStreams: true,
 		},
 	},
 	Metadata: "grpc/goph_keeper/v1/goph_keeper.proto",

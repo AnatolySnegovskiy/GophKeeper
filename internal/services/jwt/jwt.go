@@ -7,25 +7,26 @@ import (
 )
 
 type Jwt struct {
-	key []byte
+	key       []byte
+	ExpiredAt time.Duration
 }
 
 func NewJwt() *Jwt {
 	return &Jwt{
-		key: []byte("e45trjdmjkei54kmrdjkjei54eew"),
+		key:       []byte("e45trjdmjkei54kmrdjkjei54eew"),
+		ExpiredAt: time.Minute * 15,
 	}
 }
 
 func (j *Jwt) CreateToken() (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	expired := time.Minute * 15
-	claims["exp"] = time.Now().Add(expired).Unix()
+	claims["exp"] = time.Now().Add(j.ExpiredAt).Unix()
 	tokenString, err := token.SignedString(j.key)
 	return tokenString, err
 }
 
-func (j *Jwt) Validate(signedToken string) error {
+func (j *Jwt) CheckToken(signedToken string) error {
 	token, err := jwt.Parse(signedToken, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])

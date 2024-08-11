@@ -3,21 +3,30 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	pb "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"goph_keeper/internal/services/jwt"
+	"goph_keeper/internal/services/models"
 	"gorm.io/gorm"
+	"io"
 	"log/slog"
 	"net"
+	"os"
+	"strconv"
 )
 
 type GrpcServer struct {
 	pb.UnimplementedGophKeeperV1ServiceServer
-	logger *slog.Logger
-	jwt    *jwt.Jwt
-	redis  *redis.Client
-	db     *gorm.DB
+	logger      *slog.Logger
+	jwt         *jwt.Jwt
+	redis       *redis.Client
+	db          *gorm.DB
+	storagePath string
 }
 
 func NewGrpcServer(logger *slog.Logger, jwt *jwt.Jwt, redis *redis.Client, db *gorm.DB) *GrpcServer {
@@ -26,11 +35,13 @@ func NewGrpcServer(logger *slog.Logger, jwt *jwt.Jwt, redis *redis.Client, db *g
 	server.jwt = jwt
 	server.redis = redis
 	server.db = db
+	server.storagePath = "./storage"
+	_ = os.Mkdir(server.storagePath, os.ModePerm)
 	return server
 }
 
 func (s *GrpcServer) Run(lis net.Listener) error {
-	grpcServer := grpc.NewServer(grpc.StreamInterceptor(JWTStreamInterceptor))
+	grpcServer := grpc.NewServer(grpc.StreamInterceptor(s.JWTStreamInterceptor))
 	pb.RegisterGophKeeperV1ServiceServer(grpcServer, s)
 
 	if err := grpcServer.Serve(lis); err != nil {
@@ -42,18 +53,88 @@ func (s *GrpcServer) Run(lis net.Listener) error {
 
 // RegisterUser handles user registration.
 func (s *GrpcServer) RegisterUser(ctx context.Context, req *pb.RegisterUserRequest) (*pb.RegisterUserResponse, error) {
-	s.logger.Info("RegisterUser")
-	return &pb.RegisterUserResponse{}, nil
+	s.db.WithContext(ctx)
+	userModel := models.NewUserModel(s.db, s.logger)
+	err := userModel.Create(req.Username, req.Password)
+	message := ""
+
+	if err != nil {
+		message = "Failed to create user"
+	} else {
+		message = "User created successfully"
+	}
+
+	return &pb.RegisterUserResponse{
+		Success: err == nil,
+		Message: message,
+	}, err
 }
 
 // AuthenticateUser handles user authentication.
 func (s *GrpcServer) AuthenticateUser(ctx context.Context, req *pb.AuthenticateUserRequest) (*pb.AuthenticateUserResponse, error) {
-	return &pb.AuthenticateUserResponse{}, nil
+	s.db.WithContext(ctx)
+	userModel := models.NewUserModel(s.db, s.logger)
+	user, err := userModel.Auth(req.Username, req.Password)
+	message := ""
+	token := ""
+
+	if err != nil {
+		message = err.Error()
+	} else {
+		message = "User authenticated successfully"
+		token, err = s.jwt.CreateToken()
+	}
+
+	if token != "" {
+		s.redis.Set(ctx, token, user.ID, s.jwt.ExpiredAt)
+	}
+
+	return &pb.AuthenticateUserResponse{
+		Success:  err == nil,
+		JwtToken: token,
+		Message:  message,
+	}, err
 }
 
-// StorePrivateData handles storing private data.
-func (s *GrpcServer) StorePrivateData(grpc.ClientStreamingServer[pb.StorePrivateDataRequest, pb.StorePrivateDataResponse]) error {
-	return nil
+func (s *GrpcServer) StorePrivateData(srv pb.GophKeeperV1Service_StorePrivateDataServer) error {
+	userId := s.getUserId(srv)
+
+	if userId == 0 {
+		return status.Error(codes.Unauthenticated, "invalid token")
+	}
+	filename := s.storagePath + "/" + uuid.New().String()
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	data := &pb.StorePrivateDataRequest{}
+	for {
+		data, err := srv.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		_, err = file.Write(data.GetData())
+		if err != nil {
+			return status.Error(codes.Internal, "failed to store data")
+		}
+	}
+
+	storageModel := models.NewStorageModel(s.db, s.logger)
+
+	err = storageModel.Create(uint(userId), filename, data.Metadata, data.DataType)
+	if err != nil {
+		return status.Error(codes.Internal, "failed to store data")
+	}
+
+	return srv.SendAndClose(&pb.StorePrivateDataResponse{
+		Success: true,
+		Message: "Data stored successfully",
+	})
 }
 
 // SyncData handles data synchronization.
@@ -62,8 +143,68 @@ func (s *GrpcServer) SyncData(grpc.ClientStreamingServer[pb.SyncDataRequest, pb.
 }
 
 // RequestPrivateData handles requesting private data.
-func (s *GrpcServer) RequestPrivateData(grpc.BidiStreamingServer[pb.RequestPrivateDataRequest, pb.RequestPrivateDataResponse]) error {
-	return nil
+func (s *GrpcServer) RequestPrivateData(req *pb.RequestPrivateDataRequest, serv pb.GophKeeperV1Service_RequestPrivateDataServer) error {
+	userId := s.getUserId(serv)
+	if userId == 0 {
+		return status.Error(codes.Unauthenticated, "invalid token")
+	}
+
+	storageModel := models.NewStorageModel(s.db, s.logger)
+	data, err := storageModel.GetListByDataType(uint(userId), req.DataType)
+	if err != nil {
+		return status.Error(codes.Internal, "failed to get data")
+	}
+
+	if len(data) == 0 {
+		return status.Error(codes.NotFound, "data not found")
+	}
+
+	for _, d := range data {
+		file, err := os.Open(d.Path)
+		if err != nil {
+			return status.Error(codes.Internal, "failed to open data")
+		}
+		defer file.Close()
+
+		fileBytes, err := io.ReadAll(file)
+		if err != nil {
+			return status.Error(codes.Internal, "failed to read data")
+		}
+
+		err = serv.Send(&pb.RequestPrivateDataResponse{
+			Success:  true,
+			Message:  "Data sent successfully",
+			Metadata: d.Metadata,
+			Data:     fileBytes,
+		})
+		if err != nil {
+			return status.Error(codes.Internal, "failed to send data")
+		}
+	}
+
+	return serv.Send(&pb.RequestPrivateDataResponse{
+		Success: true,
+		Message: "Data sent successfully",
+	})
+}
+
+func (s *GrpcServer) getUserId(srv grpc.ServerStream) int {
+	md, ok := metadata.FromIncomingContext(srv.Context())
+	if !ok {
+		return 0
+	}
+
+	userIDs := md["user_id"]
+	if len(userIDs) == 0 {
+		return 0
+	}
+
+	userID, err := strconv.Atoi(userIDs[0])
+	if err != nil {
+		return 0
+	}
+
+	return userID
 }
 
 func (s *GrpcServer) Stop() {
