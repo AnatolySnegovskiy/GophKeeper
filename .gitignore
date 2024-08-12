@@ -1,4 +1,5 @@
 /app_volumes/
 /.idea/
 /proto/*.lock
-/storage/
+/cmd/server/storage/
+/cmd/client/storage/
