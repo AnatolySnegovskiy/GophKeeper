@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 	passwordhash "github.com/vzglad-smerti/password_hash"
-	"goph_keeper/internal/services/entities"
+	"goph_keeper/internal/server/services/entities"
 	"gorm.io/gorm"
 	"log/slog"
 )

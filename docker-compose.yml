@@ -24,7 +24,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/goph_keeper
-    container_name: goph_keeper
+    container_name: server
     volumes:
       - ./config:/root/config
     env_file: .env
@@ -35,4 +35,4 @@ services:
     links:
       - app-db
       - redis
-    command: sh -c "until nc -z app-db ${APP_PG_PORT}; do sleep 1; done && until nc -z redis_container 6379; do sleep 1; done && ./goph_keeper"
+    command: sh -c "until nc -z app-db ${APP_PG_PORT}; do sleep 1; done && until nc -z redis_container 6379; do sleep 1; done && ./server"

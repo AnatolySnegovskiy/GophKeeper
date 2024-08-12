@@ -1,7 +1,7 @@
 package db
 
 import (
-	"goph_keeper/internal/services/entities"
+	entities2 "goph_keeper/internal/server/services/entities"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -12,7 +12,7 @@ func NewGormPostgres(dsn string) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	err = db.AutoMigrate(&entities.UserEntity{}, &entities.StorageEntity{})
+	err = db.AutoMigrate(&entities2.UserEntity{}, &entities2.StorageEntity{})
 
 	return db, err
 }
