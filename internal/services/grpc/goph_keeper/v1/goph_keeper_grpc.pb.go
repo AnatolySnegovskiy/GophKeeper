@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             (unknown)
-// source: grpc/server/v1/server.proto
+// source: grpc/goph_keeper/v1/goph_keeper.proto
 
 package v1
 
@@ -19,11 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	GophKeeperV1Service_RegisterUser_FullMethodName       = "/grpc.server.v1.GophKeeperV1Service/RegisterUser"
-	GophKeeperV1Service_AuthenticateUser_FullMethodName   = "/grpc.server.v1.GophKeeperV1Service/AuthenticateUser"
-	GophKeeperV1Service_StorePrivateData_FullMethodName   = "/grpc.server.v1.GophKeeperV1Service/StorePrivateData"
-	GophKeeperV1Service_SyncData_FullMethodName           = "/grpc.server.v1.GophKeeperV1Service/SyncData"
-	GophKeeperV1Service_RequestPrivateData_FullMethodName = "/grpc.server.v1.GophKeeperV1Service/RequestPrivateData"
+	GophKeeperV1Service_RegisterUser_FullMethodName       = "/grpc.goph_keeper.v1.GophKeeperV1Service/RegisterUser"
+	GophKeeperV1Service_AuthenticateUser_FullMethodName   = "/grpc.goph_keeper.v1.GophKeeperV1Service/AuthenticateUser"
+	GophKeeperV1Service_StorePrivateData_FullMethodName   = "/grpc.goph_keeper.v1.GophKeeperV1Service/StorePrivateData"
+	GophKeeperV1Service_SyncData_FullMethodName           = "/grpc.goph_keeper.v1.GophKeeperV1Service/SyncData"
+	GophKeeperV1Service_RequestPrivateData_FullMethodName = "/grpc.goph_keeper.v1.GophKeeperV1Service/RequestPrivateData"
 )
 
 // GophKeeperV1ServiceClient is the client API for GophKeeperV1Service service.
@@ -240,7 +240,7 @@ type GophKeeperV1Service_RequestPrivateDataServer = grpc.ServerStreamingServer[R
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var GophKeeperV1Service_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "grpc.server.v1.GophKeeperV1Service",
+	ServiceName: "grpc.goph_keeper.v1.GophKeeperV1Service",
 	HandlerType: (*GophKeeperV1ServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -269,5 +269,5 @@ var GophKeeperV1Service_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "grpc/server/v1/server.proto",
+	Metadata: "grpc/goph_keeper/v1/goph_keeper.proto",
 }

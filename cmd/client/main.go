@@ -8,19 +8,20 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	"goph_keeper/internal/server/services/grpc/goph_keeper/v1"
+	"goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 )
 
-type FileMetadata struct {
-	FileName        string `json:"file_name"`
-	FileExtension   string `json:"file_extension"`
-	IsCompressed    bool   `json:"is_compressed"`
-	CompressionType string `json:"compression_type"`
+func handleError(logger *slog.Logger, err error) {
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
 }
 
 func main() {
@@ -136,15 +137,4 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Printf("Sent - %v bytes - %s\n", res.Success, res.Message)
-}
-
-func canCompressBytes(data []byte) bool {
-	// Проверить, является ли файл бинарным
-	for _, b := range data {
-		if b < 32 || b > 126 { // ASCII printable characters
-			return false // Бинарный файл
-		}
-	}
-
-	return true // Текстовый файл
 }

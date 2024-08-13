@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.34.2
 // 	protoc        (unknown)
-// source: grpc/server/v1/server.proto
+// source: grpc/goph_keeper/v1/goph_keeper.proto
 
 package v1
 
@@ -312,7 +312,7 @@ type StorePrivateDataRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	DataType DataType `protobuf:"varint,1,opt,name=data_type,json=dataType,proto3,enum=grpc.server.v1.DataType" json:"data_type,omitempty"` // e.g., "login_password", "text", "binary", "card"
+	DataType DataType `protobuf:"varint,1,opt,name=data_type,json=dataType,proto3,enum=grpc.goph_keeper.v1.DataType" json:"data_type,omitempty"` // e.g., "login_password", "text", "binary", "card"
 	Data     []byte   `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	Metadata string   `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"`
 }
@@ -533,7 +533,7 @@ type DataEntry struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	DataType DataType `protobuf:"varint,1,opt,name=data_type,json=dataType,proto3,enum=grpc.server.v1.DataType" json:"data_type,omitempty"` // e.g., "login_password", "text", "binary", "card"
+	DataType DataType `protobuf:"varint,1,opt,name=data_type,json=dataType,proto3,enum=grpc.goph_keeper.v1.DataType" json:"data_type,omitempty"` // e.g., "login_password", "text", "binary", "card"
 	Data     []byte   `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	Metadata string   `protobuf:"bytes,3,opt,name=metadata,proto3" json:"metadata,omitempty"`
 }
@@ -597,7 +597,7 @@ type RequestPrivateDataRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	DataType DataType `protobuf:"varint,2,opt,name=data_type,json=dataType,proto3,enum=grpc.server.v1.DataType" json:"data_type,omitempty"` // e.g., "login_password", "text", "binary", "card"
+	DataType DataType `protobuf:"varint,2,opt,name=data_type,json=dataType,proto3,enum=grpc.goph_keeper.v1.DataType" json:"data_type,omitempty"` // e.g., "login_password", "text", "binary", "card"
 }
 
 func (x *RequestPrivateDataRequest) Reset() {
@@ -847,34 +847,34 @@ func file_grpc_goph_keeper_v1_goph_keeper_proto_rawDescGZIP() []byte {
 var file_grpc_goph_keeper_v1_goph_keeper_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_grpc_goph_keeper_v1_goph_keeper_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_grpc_goph_keeper_v1_goph_keeper_proto_goTypes = []any{
-	(DataType)(0),                      // 0: grpc.server.v1.DataType
-	(*RegisterUserRequest)(nil),        // 1: grpc.server.v1.RegisterUserRequest
-	(*RegisterUserResponse)(nil),       // 2: grpc.server.v1.RegisterUserResponse
-	(*AuthenticateUserRequest)(nil),    // 3: grpc.server.v1.AuthenticateUserRequest
-	(*AuthenticateUserResponse)(nil),   // 4: grpc.server.v1.AuthenticateUserResponse
-	(*StorePrivateDataRequest)(nil),    // 5: grpc.server.v1.StorePrivateDataRequest
-	(*StorePrivateDataResponse)(nil),   // 6: grpc.server.v1.StorePrivateDataResponse
-	(*SyncDataRequest)(nil),            // 7: grpc.server.v1.SyncDataRequest
-	(*SyncDataResponse)(nil),           // 8: grpc.server.v1.SyncDataResponse
-	(*DataEntry)(nil),                  // 9: grpc.server.v1.DataEntry
-	(*RequestPrivateDataRequest)(nil),  // 10: grpc.server.v1.RequestPrivateDataRequest
-	(*RequestPrivateDataResponse)(nil), // 11: grpc.server.v1.RequestPrivateDataResponse
+	(DataType)(0),                      // 0: grpc.goph_keeper.v1.DataType
+	(*RegisterUserRequest)(nil),        // 1: grpc.goph_keeper.v1.RegisterUserRequest
+	(*RegisterUserResponse)(nil),       // 2: grpc.goph_keeper.v1.RegisterUserResponse
+	(*AuthenticateUserRequest)(nil),    // 3: grpc.goph_keeper.v1.AuthenticateUserRequest
+	(*AuthenticateUserResponse)(nil),   // 4: grpc.goph_keeper.v1.AuthenticateUserResponse
+	(*StorePrivateDataRequest)(nil),    // 5: grpc.goph_keeper.v1.StorePrivateDataRequest
+	(*StorePrivateDataResponse)(nil),   // 6: grpc.goph_keeper.v1.StorePrivateDataResponse
+	(*SyncDataRequest)(nil),            // 7: grpc.goph_keeper.v1.SyncDataRequest
+	(*SyncDataResponse)(nil),           // 8: grpc.goph_keeper.v1.SyncDataResponse
+	(*DataEntry)(nil),                  // 9: grpc.goph_keeper.v1.DataEntry
+	(*RequestPrivateDataRequest)(nil),  // 10: grpc.goph_keeper.v1.RequestPrivateDataRequest
+	(*RequestPrivateDataResponse)(nil), // 11: grpc.goph_keeper.v1.RequestPrivateDataResponse
 }
 var file_grpc_goph_keeper_v1_goph_keeper_proto_depIdxs = []int32{
-	0,  // 0: grpc.server.v1.StorePrivateDataRequest.data_type:type_name -> grpc.server.v1.DataType
-	9,  // 1: grpc.server.v1.SyncDataRequest.data_entries:type_name -> grpc.server.v1.DataEntry
-	0,  // 2: grpc.server.v1.DataEntry.data_type:type_name -> grpc.server.v1.DataType
-	0,  // 3: grpc.server.v1.RequestPrivateDataRequest.data_type:type_name -> grpc.server.v1.DataType
-	1,  // 4: grpc.server.v1.GophKeeperV1Service.RegisterUser:input_type -> grpc.server.v1.RegisterUserRequest
-	3,  // 5: grpc.server.v1.GophKeeperV1Service.AuthenticateUser:input_type -> grpc.server.v1.AuthenticateUserRequest
-	5,  // 6: grpc.server.v1.GophKeeperV1Service.StorePrivateData:input_type -> grpc.server.v1.StorePrivateDataRequest
-	7,  // 7: grpc.server.v1.GophKeeperV1Service.SyncData:input_type -> grpc.server.v1.SyncDataRequest
-	10, // 8: grpc.server.v1.GophKeeperV1Service.RequestPrivateData:input_type -> grpc.server.v1.RequestPrivateDataRequest
-	2,  // 9: grpc.server.v1.GophKeeperV1Service.RegisterUser:output_type -> grpc.server.v1.RegisterUserResponse
-	4,  // 10: grpc.server.v1.GophKeeperV1Service.AuthenticateUser:output_type -> grpc.server.v1.AuthenticateUserResponse
-	6,  // 11: grpc.server.v1.GophKeeperV1Service.StorePrivateData:output_type -> grpc.server.v1.StorePrivateDataResponse
-	8,  // 12: grpc.server.v1.GophKeeperV1Service.SyncData:output_type -> grpc.server.v1.SyncDataResponse
-	11, // 13: grpc.server.v1.GophKeeperV1Service.RequestPrivateData:output_type -> grpc.server.v1.RequestPrivateDataResponse
+	0,  // 0: grpc.goph_keeper.v1.StorePrivateDataRequest.data_type:type_name -> grpc.goph_keeper.v1.DataType
+	9,  // 1: grpc.goph_keeper.v1.SyncDataRequest.data_entries:type_name -> grpc.goph_keeper.v1.DataEntry
+	0,  // 2: grpc.goph_keeper.v1.DataEntry.data_type:type_name -> grpc.goph_keeper.v1.DataType
+	0,  // 3: grpc.goph_keeper.v1.RequestPrivateDataRequest.data_type:type_name -> grpc.goph_keeper.v1.DataType
+	1,  // 4: grpc.goph_keeper.v1.GophKeeperV1Service.RegisterUser:input_type -> grpc.goph_keeper.v1.RegisterUserRequest
+	3,  // 5: grpc.goph_keeper.v1.GophKeeperV1Service.AuthenticateUser:input_type -> grpc.goph_keeper.v1.AuthenticateUserRequest
+	5,  // 6: grpc.goph_keeper.v1.GophKeeperV1Service.StorePrivateData:input_type -> grpc.goph_keeper.v1.StorePrivateDataRequest
+	7,  // 7: grpc.goph_keeper.v1.GophKeeperV1Service.SyncData:input_type -> grpc.goph_keeper.v1.SyncDataRequest
+	10, // 8: grpc.goph_keeper.v1.GophKeeperV1Service.RequestPrivateData:input_type -> grpc.goph_keeper.v1.RequestPrivateDataRequest
+	2,  // 9: grpc.goph_keeper.v1.GophKeeperV1Service.RegisterUser:output_type -> grpc.goph_keeper.v1.RegisterUserResponse
+	4,  // 10: grpc.goph_keeper.v1.GophKeeperV1Service.AuthenticateUser:output_type -> grpc.goph_keeper.v1.AuthenticateUserResponse
+	6,  // 11: grpc.goph_keeper.v1.GophKeeperV1Service.StorePrivateData:output_type -> grpc.goph_keeper.v1.StorePrivateDataResponse
+	8,  // 12: grpc.goph_keeper.v1.GophKeeperV1Service.SyncData:output_type -> grpc.goph_keeper.v1.SyncDataResponse
+	11, // 13: grpc.goph_keeper.v1.GophKeeperV1Service.RequestPrivateData:output_type -> grpc.goph_keeper.v1.RequestPrivateDataResponse
 	9,  // [9:14] is the sub-list for method output_type
 	4,  // [4:9] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name

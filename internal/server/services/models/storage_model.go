@@ -2,7 +2,7 @@ package models
 
 import (
 	"goph_keeper/internal/server/services/entities"
-	"goph_keeper/internal/server/services/grpc/goph_keeper/v1"
+	"goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"gorm.io/gorm"
 	"log/slog"
 )
