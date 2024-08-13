@@ -3,24 +3,29 @@ package client
 import (
 	"context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"log/slog"
 )
 
 type GrpcClient struct {
 	grpcClient v1.GophKeeperV1ServiceClient
 	login      string
 	password   string
+	logger     *slog.Logger
 }
 
-func NewGrpcClient() (*GrpcClient, error) {
-	client := &GrpcClient{}
-	conn, err := grpc.NewClient("127.0.0.1:8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	defer conn.Close()
-	client.grpcClient = v1.NewGophKeeperV1ServiceClient(conn)
+func NewGrpcClient(logger *slog.Logger, conn *grpc.ClientConn, login string, password string) *GrpcClient {
+	client := &GrpcClient{
+		login:    login,
+		password: password,
+		logger:   logger,
+	}
 
-	return client, err
+	client.grpcClient = v1.NewGophKeeperV1ServiceClient(conn)
+	logger.Info("Connected to gRPC server")
+
+	return client
 }
 
 func (c *GrpcClient) Authenticate(ctx context.Context, login string, password string) (*v1.AuthenticateUserResponse, error) {
@@ -43,7 +48,7 @@ func (c *GrpcClient) StoreData(ctx context.Context, filePath string) (*v1.StoreP
 		return nil, err
 	}
 
-	err = c.SendFile(stream, filePath)
+	err = c.sendFile(stream, filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +59,7 @@ func (c *GrpcClient) StoreData(ctx context.Context, filePath string) (*v1.StoreP
 
 func (c *GrpcClient) getAuthCTX(ctx context.Context) (context.Context, error) {
 	token, err := c.Authenticate(ctx, c.login, c.password)
+
 	if err != nil {
 		return nil, err
 	}
