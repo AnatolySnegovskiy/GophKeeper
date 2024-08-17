@@ -3,3 +3,4 @@
 /proto/*.lock
 /cmd/server/storage/
 /cmd/client/storage/
+/bin/

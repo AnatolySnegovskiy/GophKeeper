@@ -37,7 +37,7 @@ func (c *GrpcClient) Authenticate(ctx context.Context, login string, password st
 	return token, err
 }
 
-func (c *GrpcClient) StoreData(ctx context.Context, filePath string) (*v1.StorePrivateDataResponse, error) {
+func (c *GrpcClient) StoreData(ctx context.Context, filePath string, progressChan chan<- int) (*v1.StorePrivateDataResponse, error) {
 	authCTX, err := c.getAuthCTX(ctx)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (c *GrpcClient) StoreData(ctx context.Context, filePath string) (*v1.StoreP
 		return nil, err
 	}
 
-	err = c.sendFile(stream, filePath)
+	err = c.sendFile(stream, filePath, progressChan)
 	if err != nil {
 		return nil, err
 	}

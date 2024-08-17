@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-func (c *GrpcClient) sendFile(stream v1.GophKeeperV1Service_StorePrivateDataClient, filePath string) error {
+func (c *GrpcClient) sendFile(stream v1.GophKeeperV1Service_StorePrivateDataClient, filePath string, progressChan chan<- int) error {
 	file, fileMetadata, err := c.preparedFile(filePath)
 	defer file.Close()
 	if err != nil {
@@ -21,20 +21,28 @@ func (c *GrpcClient) sendFile(stream v1.GophKeeperV1Service_StorePrivateDataClie
 	if err != nil {
 		return err
 	}
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return err
+	}
+	totalSize := fileInfo.Size()
 
 	batchNumber := 1
 	segmentSize := 102400
 	bufSender := make([]byte, segmentSize)
 	resendCounter := 0
+	var sentSize int64 = 0
+	lastProgress := 0
 
 	for {
 		num, err := file.Read(bufSender)
-		if err == io.EOF {
-			break
-		}
 		if err != nil {
 			return err
 		}
+		if err == io.EOF {
+			break
+		}
+
 		chunk := bufSender[:num]
 		err = stream.Send(&v1.StorePrivateDataRequest{
 			Data:     chunk,
@@ -52,9 +60,18 @@ func (c *GrpcClient) sendFile(stream v1.GophKeeperV1Service_StorePrivateDataClie
 
 		resendCounter = 0
 		batchNumber += 1
-		c.logger.Info(fmt.Sprintf("Sending file chunk: %d", batchNumber))
+
+		sentSize += int64(num)
+		progress := int(float64(sentSize) / float64(totalSize) * 100)
+
+		// Update progress only if it changes by at least 1%
+		if progress > lastProgress {
+			lastProgress = progress
+			progressChan <- progress
+		}
 	}
 
+	progressChan <- 100
 	return nil
 }
 

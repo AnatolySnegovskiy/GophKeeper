@@ -1,14 +1,14 @@
 package main
 
 import (
-	"context"
 	"fmt"
+	"github.com/rivo/tview"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"goph_keeper/internal/client"
+	"goph_keeper/internal/client/ui"
 	"log/slog"
 	"os"
-	"path/filepath"
 )
 
 func handleError(logger *slog.Logger, err error) {
@@ -19,18 +19,18 @@ func handleError(logger *slog.Logger, err error) {
 }
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	conn, err := grpc.NewClient("127.0.0.1:8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	handleError(logger, err)
+	file, err := os.OpenFile("log.json", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println("Failed to open log file")
+		os.Exit(1)
+	}
+	defer file.Close()
+	logger := slog.New(slog.NewJSONHandler(file, nil))
+	conn, _ := grpc.NewClient("127.0.0.1:8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer conn.Close()
-
 	c := client.NewGrpcClient(logger, conn, "User1", "test")
 
-	cwd, err := os.Getwd()
-	handleError(logger, err)
-
-	filePath := filepath.Join(cwd, "cmd/client/storage/Kingdom.of.the.Planet.of.the.Apes.2024.D.WEBRip.1O8Op.mkv")
-	res, err := c.StoreData(context.Background(), filePath)
-	handleError(logger, err)
-	logger.Info(fmt.Sprintf("Success: %t, Message: %s", res.Success, res.Message))
+	app := tview.NewApplication()
+	menu := ui.NewMenu(app, logger, c)
+	handleError(logger, menu.ShowMainMenu(app, logger))
 }
