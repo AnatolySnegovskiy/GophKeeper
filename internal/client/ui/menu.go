@@ -29,3 +29,10 @@ func isRootPath(path string) bool {
 	}
 	return path == "/"
 }
+
+func isDriveRoot(path string) bool {
+	if runtime.GOOS == "windows" {
+		return len(path) == 3 && path[1] == ':'
+	}
+	return false
+}

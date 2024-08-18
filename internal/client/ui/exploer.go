@@ -2,10 +2,12 @@ package ui
 
 import (
 	"fmt"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 func (m *Menu) explore(callback func(filePath string, rollback func())) {
@@ -44,7 +46,11 @@ func (m *Menu) showDirectoryContents(path string, list *tview.List, callback fun
 		return
 	}
 
-	if !isRootPath(path) {
+	if isDriveRoot(path) {
+		list.AddItem("..", "", 0, func() {
+			m.explore(callback)
+		})
+	} else if !isRootPath(path) {
 		parentPath := filepath.Dir(path)
 		list.AddItem("..", "", 0, func() {
 			m.showDirectoryContents(parentPath, list, callback)
@@ -66,4 +72,23 @@ func (m *Menu) showDirectoryContents(path string, list *tview.List, callback fun
 			})
 		}
 	}
+
+	list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyRight:
+			currentItemIndex := list.GetCurrentItem()
+			if currentItemIndex >= 0 && currentItemIndex < list.GetItemCount() {
+				mainText, _ := list.GetItemText(currentItemIndex)
+				if strings.HasSuffix(mainText, "/") {
+					m.showDirectoryContents(filepath.Join(path, strings.TrimSuffix(mainText, "/")), list, callback)
+				}
+			}
+		case tcell.KeyLeft:
+			parentPath := filepath.Dir(path)
+			m.showDirectoryContents(parentPath, list, callback)
+		default:
+			return event
+		}
+		return event
+	})
 }
