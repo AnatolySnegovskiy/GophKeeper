@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"log/slog"
 )
 
-func (m *Menu) showAppMenu(app *tview.Application, logger *slog.Logger) {
+func (m *Menu) showAppMenu() {
 	title := tview.NewTextView().
 		SetText(m.title).
 		SetTextAlign(tview.AlignCenter).
@@ -16,7 +15,7 @@ func (m *Menu) showAppMenu(app *tview.Application, logger *slog.Logger) {
 
 	list := tview.NewList().
 		AddItem("1. Отправить файл", "", '1', func() {
-			m.showSendFileForm(app, logger)
+			m.showSendFileForm()
 		}).
 		AddItem("2. Получить файл", "", '2', func() {
 		}).
@@ -29,62 +28,68 @@ func (m *Menu) showAppMenu(app *tview.Application, logger *slog.Logger) {
 		AddItem(title, 3, 1, false).
 		AddItem(list, 0, 1, true)
 
-	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	m.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyEsc:
-			app.Stop()
+			m.app.Stop()
 			return nil
 		}
 		return event
 	})
 
-	app.SetRoot(mainLayout, true).SetFocus(list)
+	m.app.SetRoot(mainLayout, true).SetFocus(list)
 }
 
-func (m *Menu) showSendFileForm(app *tview.Application, logger *slog.Logger) {
-	form := tview.NewForm()
+func (m *Menu) showSendFileForm() {
+	progressBar := NewProgressBar(100)
 	info := tview.NewTextView().
 		SetDynamicColors(true).
 		SetText("")
-	progressBar := NewProgressBar(100)
 
-	sendButtonHandler := func() {
-		filePath := form.GetFormItemByLabel("File Path").(*tview.InputField).GetText()
-		progressChan := make(chan int)
-
+	f := func(filePath string, rollback func()) {
 		if filePath == "" {
 			info.SetText("File Path cannot be empty")
 			return
 		}
 
+		form := tview.NewForm().
+			AddFormItem(info).
+			AddFormItem(progressBar)
+		form.SetBorder(true).SetTitle("Send File").SetTitleAlign(tview.AlignLeft)
+		flex := tview.NewFlex().
+			SetDirection(tview.FlexRow).
+			AddItem(form, 0, 1, true)
+
+		m.app.SetRoot(flex, true)
+
+		progressChan := make(chan int)
+
 		go func() {
 			res, err := m.grpcClient.StoreData(context.Background(), filePath, progressChan)
 			if err != nil {
-				app.QueueUpdateDraw(func() {
+				m.app.QueueUpdateDraw(func() {
 					info.SetText(fmt.Sprintf("[red]Error: %s", err))
 				})
 			}
 			close(progressChan)
-			app.QueueUpdateDraw(func() {
+			m.app.QueueUpdateDraw(func() {
 				info.SetText(fmt.Sprintf("[green]Success: %s", res.Message))
 			})
 		}()
 
 		go func() {
 			for progress := range progressChan {
-				app.QueueUpdateDraw(func() {
+				m.app.QueueUpdateDraw(func() {
 					progressBar.SetProgress(progress)
+				})
+			}
+			if progressBar.current >= 100 {
+				form.AddButton("OK", func() {
+					rollback()
 				})
 			}
 		}()
 	}
 
-	form.AddFormItem(info).
-		AddInputField("File Path", "", 30, nil, nil).
-		AddButton("Send", sendButtonHandler).
-		AddButton("Cancel", func() { m.showAppMenu(app, logger) }).
-		AddFormItem(progressBar)
-
-	form.SetBorder(true).SetTitle("Отправить файл").SetTitleAlign(tview.AlignLeft)
-	app.SetRoot(form, true)
+	m.explore(f)
 }

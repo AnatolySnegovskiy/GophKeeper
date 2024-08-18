@@ -3,10 +3,9 @@ package ui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"log/slog"
 )
 
-func (m *Menu) ShowMainMenu(app *tview.Application, logger *slog.Logger) error {
+func (m *Menu) ShowMainMenu() error {
 	title := tview.NewTextView().
 		SetText(m.title).
 		SetTextAlign(tview.AlignCenter).
@@ -14,10 +13,10 @@ func (m *Menu) ShowMainMenu(app *tview.Application, logger *slog.Logger) error {
 
 	list := tview.NewList().
 		AddItem("1. Регистрация", "", '1', func() {
-			m.showRegistrationForm(app, logger)
+			m.showRegistrationForm()
 		}).
 		AddItem("2. Авторизация", "", '2', func() {
-			m.showAuthorizationForm(app, logger)
+			m.showAuthorizationForm()
 		}).
 		SetSelectedFocusOnly(true)
 
@@ -26,15 +25,15 @@ func (m *Menu) ShowMainMenu(app *tview.Application, logger *slog.Logger) error {
 		AddItem(title, 3, 1, false).
 		AddItem(list, 0, 1, true)
 
-	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	m.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyEsc:
-			app.Stop()
+			m.app.Stop()
 			return nil
 		}
 		return event
 	})
 
-	app.SetRoot(mainLayout, true).SetFocus(list)
-	return app.Run()
+	m.app.SetRoot(mainLayout, true).SetFocus(list)
+	return m.app.Run()
 }

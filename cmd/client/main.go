@@ -32,5 +32,5 @@ func main() {
 
 	app := tview.NewApplication()
 	menu := ui.NewMenu(app, logger, c)
-	handleError(logger, menu.ShowMainMenu(app, logger))
+	handleError(logger, menu.ShowMainMenu())
 }
