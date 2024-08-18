@@ -6,4 +6,5 @@ type FileMetadata struct {
 	MemType         string `json:"mem_type"`
 	IsCompressed    bool   `json:"is_compressed"`
 	CompressionType string `json:"compression_type"`
+	FileSize        int64  `json:"file_size"`
 }

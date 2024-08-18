@@ -22,6 +22,7 @@ func GetFileMetadata(file *os.File) (entities.FileMetadata, error) {
 		MemType:         http.DetectContentType(buf),
 		IsCompressed:    canCompressBytes(buf),
 		CompressionType: "",
+		FileSize:        fileInfo.Size(),
 	}, nil
 }
 

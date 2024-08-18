@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"goph_keeper/internal/server/services/jwt"
-	models2 "goph_keeper/internal/server/services/models"
+	"goph_keeper/internal/server/services/models"
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"gorm.io/gorm"
 	"io"
@@ -54,7 +54,7 @@ func (s *GrpcServer) Run(lis net.Listener) error {
 // RegisterUser handles user registration.
 func (s *GrpcServer) RegisterUser(ctx context.Context, req *v1.RegisterUserRequest) (*v1.RegisterUserResponse, error) {
 	s.db.WithContext(ctx)
-	userModel := models2.NewUserModel(s.db, s.logger)
+	userModel := models.NewUserModel(s.db, s.logger)
 	err := userModel.Create(req.Username, req.Password)
 	message := ""
 
@@ -73,7 +73,7 @@ func (s *GrpcServer) RegisterUser(ctx context.Context, req *v1.RegisterUserReque
 // AuthenticateUser handles user authentication.
 func (s *GrpcServer) AuthenticateUser(ctx context.Context, req *v1.AuthenticateUserRequest) (*v1.AuthenticateUserResponse, error) {
 	s.db.WithContext(ctx)
-	userModel := models2.NewUserModel(s.db, s.logger)
+	userModel := models.NewUserModel(s.db, s.logger)
 	user, err := userModel.Auth(req.Username, req.Password)
 	message := ""
 	token := ""
@@ -124,7 +124,7 @@ func (s *GrpcServer) StorePrivateData(srv v1.GophKeeperV1Service_StorePrivateDat
 		}
 	}
 
-	storageModel := models2.NewStorageModel(s.db, s.logger)
+	storageModel := models.NewStorageModel(s.db, s.logger)
 
 	err = storageModel.Create(uint(userId), filename, data.Metadata, data.DataType)
 	if err != nil {
@@ -149,7 +149,7 @@ func (s *GrpcServer) RequestPrivateData(req *v1.RequestPrivateDataRequest, serv 
 		return status.Error(codes.Unauthenticated, "invalid token")
 	}
 
-	storageModel := models2.NewStorageModel(s.db, s.logger)
+	storageModel := models.NewStorageModel(s.db, s.logger)
 	data, err := storageModel.GetListByDataType(uint(userId), req.DataType)
 	if err != nil {
 		return status.Error(codes.Internal, "failed to get data")
