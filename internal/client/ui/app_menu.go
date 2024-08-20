@@ -14,12 +14,12 @@ func (m *Menu) showAppMenu() {
 		SetDynamicColors(true)
 
 	list := tview.NewList().
-		AddItem("1. Отправить файл", "", '1', func() {
+		AddItem("1. Файлы", "", '1', func() {
 			m.showSendFileForm()
 		}).
-		AddItem("2. Получить файл", "", '2', func() {
+		AddItem("2. Пароли", "", '2', func() {
 		}).
-		AddItem("3. Синхронизировать файлы", "", '2', func() {
+		AddItem("3. Карты", "", '2', func() {
 		}).
 		SetSelectedFocusOnly(true)
 
@@ -65,7 +65,7 @@ func (m *Menu) showSendFileForm() {
 		progressChan := make(chan int)
 
 		go func() {
-			res, err := m.grpcClient.StoreData(context.Background(), filePath, progressChan)
+			res, err := m.grpcClient.UploadFile(context.Background(), filePath, progressChan)
 			if err != nil {
 				m.app.QueueUpdateDraw(func() {
 					info.SetText(fmt.Sprintf("[red]Error: %s", err))

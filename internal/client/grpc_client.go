@@ -4,8 +4,11 @@ import (
 	"context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"goph_keeper/internal/services"
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"io"
 	"log/slog"
+	"os"
 )
 
 type GrpcClient struct {
@@ -28,22 +31,59 @@ func NewGrpcClient(logger *slog.Logger, conn *grpc.ClientConn, login string, pas
 	return client
 }
 
-func (c *GrpcClient) Authenticate(ctx context.Context, login string, password string) (*v1.AuthenticateUserResponse, error) {
-	token, err := c.grpcClient.AuthenticateUser(ctx, &v1.AuthenticateUserRequest{
+func (c *GrpcClient) Authenticate(ctx context.Context, login string, password string) (*v1.Verify2FAResponse, error) {
+	tokenSsh, err := c.grpcClient.AuthenticateUser(ctx, &v1.AuthenticateUserRequest{
 		Username: login,
 		Password: password,
 	})
 
-	return token, err
+	if err != nil || tokenSsh == nil || !tokenSsh.Success {
+		return nil, err
+	}
+
+	file, err := os.Open("./.ssh/private_key.pem")
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	ssh := services.NewSshKeyGen()
+	token, err := ssh.DecryptionFunction(tokenSsh.Token, string(content))
+	if err != nil {
+		return nil, err
+	}
+
+	return c.grpcClient.Verify2FA(ctx, &v1.Verify2FARequest{
+		Token: token,
+	})
 }
 
-func (c *GrpcClient) StoreData(ctx context.Context, filePath string, progressChan chan<- int) (*v1.StorePrivateDataResponse, error) {
+func (c *GrpcClient) RegisterUser(ctx context.Context, login string, password string) (*v1.RegisterUserResponse, error) {
+	ssh := services.NewSshKeyGen()
+	sshPub, err := ssh.Generate()
+	if err != nil {
+		return nil, err
+	}
+
+	return c.grpcClient.RegisterUser(ctx, &v1.RegisterUserRequest{
+		Username:  login,
+		Password:  password,
+		SshPubKey: sshPub,
+	})
+}
+
+func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, progressChan chan<- int) (*v1.UploadDataResponse, error) {
 	authCTX, err := c.getAuthCTX(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	stream, err := c.grpcClient.StorePrivateData(authCTX)
+	stream, err := c.grpcClient.UploadData(authCTX)
 	if err != nil {
 		return nil, err
 	}

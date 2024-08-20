@@ -28,9 +28,10 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(file, nil))
 	conn, _ := grpc.NewClient("127.0.0.1:8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer conn.Close()
-	c := client.NewGrpcClient(logger, conn, "User1", "test")
+	c := client.NewGrpcClient(logger, conn, "Test", "Test")
 
 	app := tview.NewApplication()
 	menu := ui.NewMenu(app, logger, c)
-	handleError(logger, menu.ShowMainMenu())
+	menu.ShowMainMenu()
+	handleError(logger, app.Run())
 }

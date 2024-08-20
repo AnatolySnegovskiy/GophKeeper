@@ -11,22 +11,27 @@ service GophKeeperV1Service {
   // User authentication
   rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse);
 
-  // Storing private data (streaming)
-  rpc StorePrivateData(stream StorePrivateDataRequest) returns (StorePrivateDataResponse);
+  // Verifying 2FA
+  rpc Verify2FA(Verify2FARequest) returns (Verify2FAResponse);
 
-  // Synchronizing data (streaming)
-  rpc SyncData(stream SyncDataRequest) returns (SyncDataResponse);
+  // Storing private data (streaming)
+  rpc UploadData(stream UploadDataRequest) returns (UploadDataResponse);
+
+  // Listing private data
+  rpc GetStoreDataList(GetStoreDataListRequest) returns (GetStoreDataListResponse);
 
   // Requesting private data (streaming)
-  rpc RequestPrivateData(RequestPrivateDataRequest) returns (stream RequestPrivateDataResponse);
+  rpc DownloadData(DownloadDataRequest) returns (stream DownloadDataResponse);
 }
 
 // User Registration
 message RegisterUserRequest {
   string username = 1;
   string password = 2;
+  string ssh_pub_key = 3;
 }
 
+// User Registration Response
 message RegisterUserResponse {
   bool success = 1;
   string message = 2;
@@ -38,46 +43,68 @@ message AuthenticateUserRequest {
   string password = 2;
 }
 
+// User Authentication Response
 message AuthenticateUserResponse {
   bool success = 1;
+  string token = 2;
+}
+
+// Verifying 2FA (2FA) token from ssh cache
+message Verify2FARequest {
+  string token = 1;
+}
+
+// Verifying 2FA (2FA) response
+message Verify2FAResponse {
+  bool success = 1;
   string jwt_token = 2;
-  string message = 3;
 }
 
 // Storing Private Data (streaming)
-message StorePrivateDataRequest {
+message UploadDataRequest {
   DataType data_type = 1;  // e.g., "login_password", "text", "binary", "card"
   bytes data = 2;
   string metadata = 3;
+  string user_path = 4;
 }
 
-message StorePrivateDataResponse {
+// Storing Private Data Response
+message UploadDataResponse {
   bool success = 1;
   string message = 2;
 }
 
-// Data Synchronization (streaming)
-message SyncDataRequest {
-  repeated DataEntry data_entries = 1;
-}
-
-message SyncDataResponse {
-  bool success = 1;
-  string message = 2;
-}
-
+// Listing Private Data
 message DataEntry {
   DataType data_type = 1;  // e.g., "login_password", "text", "binary", "card"
   bytes data = 2;
   string metadata = 3;
 }
 
-// Requesting Private Data (streaming)
-message RequestPrivateDataRequest {
-  DataType data_type = 2;  // e.g., "login_password", "text", "binary", "card"
+// Listing Private Data
+message GetStoreDataListRequest {
+    DataType data_type = 1;
 }
 
-message RequestPrivateDataResponse {
+// Requesting Private Data (streaming)
+message DownloadDataRequest {
+  string uuid = 1;
+}
+
+// Requesting Private Data
+message GetStoreDataListResponse {
+  repeated ListDataEntry entries = 1;
+}
+
+// Requesting Private Data
+message ListDataEntry {
+  string uuid = 1;
+  string metadata = 2;
+  string user_path = 3;
+}
+
+// Requesting Private Data
+message DownloadDataResponse {
   bool success = 1;
   bytes data = 2;
   string metadata = 3;
@@ -88,7 +115,6 @@ message RequestPrivateDataResponse {
 enum DataType {
   DATA_TYPE_UNSPECIFIED = 0; // Default value, indicates unspecified data type
   DATA_TYPE_LOGIN_PASSWORD = 1;
-  DATA_TYPE_TEXT = 2;
   DATA_TYPE_BINARY = 3;
   DATA_TYPE_CARD = 4;
 }

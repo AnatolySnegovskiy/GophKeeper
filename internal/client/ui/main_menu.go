@@ -5,7 +5,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-func (m *Menu) ShowMainMenu() error {
+func (m *Menu) ShowMainMenu() {
 	title := tview.NewTextView().
 		SetText(m.title).
 		SetTextAlign(tview.AlignCenter).
@@ -35,5 +35,4 @@ func (m *Menu) ShowMainMenu() error {
 	})
 
 	m.app.SetRoot(mainLayout, true).SetFocus(list)
-	return m.app.Run()
 }

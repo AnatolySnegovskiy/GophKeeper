@@ -25,3 +25,8 @@ func (s *StorageModel) GetListByDataType(u uint, dataType v1.DataType) ([]*entit
 	storages := make([]*entities.StorageEntity, 0)
 	return storages, s.ifErrorLog(s.DB.Where("user_id = ? AND data_type = ?", u, dataType).Find(&storages).Error)
 }
+
+func (s *StorageModel) GetListByUuid(u uint, uuid string) (*entities.StorageEntity, error) {
+	storage := &entities.StorageEntity{}
+	return storage, s.ifErrorLog(s.DB.Where("user_id = ? AND uuid = ?", u, uuid).First(&storage).Error)
+}

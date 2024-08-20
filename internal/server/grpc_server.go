@@ -11,13 +11,16 @@ import (
 	"google.golang.org/grpc/status"
 	"goph_keeper/internal/server/services/jwt"
 	"goph_keeper/internal/server/services/models"
+	"goph_keeper/internal/services"
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"gorm.io/gorm"
 	"io"
 	"log/slog"
+	"math/rand"
 	"net"
 	"os"
 	"strconv"
+	"time"
 )
 
 type GrpcServer struct {
@@ -55,7 +58,7 @@ func (s *GrpcServer) Run(lis net.Listener) error {
 func (s *GrpcServer) RegisterUser(ctx context.Context, req *v1.RegisterUserRequest) (*v1.RegisterUserResponse, error) {
 	s.db.WithContext(ctx)
 	userModel := models.NewUserModel(s.db, s.logger)
-	err := userModel.Create(req.Username, req.Password)
+	err := userModel.Create(req.Username, req.Password, req.SshPubKey)
 	message := ""
 
 	if err != nil {
@@ -75,28 +78,48 @@ func (s *GrpcServer) AuthenticateUser(ctx context.Context, req *v1.AuthenticateU
 	s.db.WithContext(ctx)
 	userModel := models.NewUserModel(s.db, s.logger)
 	user, err := userModel.Auth(req.Username, req.Password)
-	message := ""
+	randomToken := ""
 	token := ""
 
-	if err != nil {
-		message = err.Error()
-	} else {
-		message = "User authenticated successfully"
-		token, err = s.jwt.CreateToken()
+	if err == nil {
+		ssh := services.NewSshKeyGen()
+		randomToken = strconv.Itoa(int(user.ID * uint(rand.Uint32())))
+		token, err = ssh.EncryptMessage(randomToken, user.SshPubKey)
 	}
 
 	if token != "" {
-		s.redis.Set(ctx, token, user.ID, s.jwt.ExpiredAt)
+		s.redis.Set(ctx, randomToken, user.ID, 1*time.Minute)
 	}
 
 	return &v1.AuthenticateUserResponse{
-		Success:  err == nil,
-		JwtToken: token,
-		Message:  message,
+		Success: err == nil,
+		Token:   token,
 	}, err
 }
 
-func (s *GrpcServer) StorePrivateData(srv v1.GophKeeperV1Service_StorePrivateDataServer) error {
+func (s *GrpcServer) Verify2FA(ctx context.Context, req *v1.Verify2FARequest) (*v1.Verify2FAResponse, error) {
+	s.db.WithContext(ctx)
+	userId, err := s.redis.Get(ctx, req.Token).Int()
+	if err != nil {
+		return &v1.Verify2FAResponse{
+			Success:  false,
+			JwtToken: "",
+		}, err
+	}
+
+	token, err := s.jwt.CreateToken()
+
+	if userId != 0 && token != "" {
+		s.redis.Set(ctx, token, userId, s.jwt.ExpiredAt)
+	}
+
+	return &v1.Verify2FAResponse{
+		Success:  err == nil,
+		JwtToken: token,
+	}, err
+}
+
+func (s *GrpcServer) UploadData(srv v1.GophKeeperV1Service_UploadDataServer) error {
 	userId := s.getUserId(srv)
 
 	if userId == 0 {
@@ -108,7 +131,7 @@ func (s *GrpcServer) StorePrivateData(srv v1.GophKeeperV1Service_StorePrivateDat
 		return err
 	}
 	defer file.Close()
-	data := &v1.StorePrivateDataRequest{}
+	data := &v1.UploadDataRequest{}
 	for {
 		data, err := srv.Recv()
 		if err == io.EOF {
@@ -131,58 +154,47 @@ func (s *GrpcServer) StorePrivateData(srv v1.GophKeeperV1Service_StorePrivateDat
 		return status.Error(codes.Internal, "failed to store data")
 	}
 
-	return srv.SendAndClose(&v1.StorePrivateDataResponse{
+	return srv.SendAndClose(&v1.UploadDataResponse{
 		Success: true,
 		Message: "Data stored successfully",
 	})
 }
 
-// SyncData handles data synchronization.
-func (s *GrpcServer) SyncData(grpc.ClientStreamingServer[v1.SyncDataRequest, v1.SyncDataResponse]) error {
-	return nil
-}
-
 // RequestPrivateData handles requesting private data.
-func (s *GrpcServer) RequestPrivateData(req *v1.RequestPrivateDataRequest, serv v1.GophKeeperV1Service_RequestPrivateDataServer) error {
+func (s *GrpcServer) DownloadData(req *v1.DownloadDataRequest, serv v1.GophKeeperV1Service_DownloadDataServer) error {
 	userId := s.getUserId(serv)
 	if userId == 0 {
 		return status.Error(codes.Unauthenticated, "invalid token")
 	}
 
 	storageModel := models.NewStorageModel(s.db, s.logger)
-	data, err := storageModel.GetListByDataType(uint(userId), req.DataType)
+	data, err := storageModel.GetListByUuid(uint(userId), req.Uuid)
 	if err != nil {
 		return status.Error(codes.Internal, "failed to get data")
 	}
 
-	if len(data) == 0 {
-		return status.Error(codes.NotFound, "data not found")
+	file, err := os.Open(data.Path)
+	if err != nil {
+		return status.Error(codes.Internal, "failed to open data")
+	}
+	defer file.Close()
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		return status.Error(codes.Internal, "failed to read data")
+	}
+	//TODO: send Partial data
+	err = serv.Send(&v1.DownloadDataResponse{
+		Success:  true,
+		Message:  "Data sent successfully",
+		Metadata: data.Metadata,
+		Data:     fileBytes,
+	})
+	if err != nil {
+		return status.Error(codes.Internal, "failed to send data")
 	}
 
-	for _, d := range data {
-		file, err := os.Open(d.Path)
-		if err != nil {
-			return status.Error(codes.Internal, "failed to open data")
-		}
-		defer file.Close()
-
-		fileBytes, err := io.ReadAll(file)
-		if err != nil {
-			return status.Error(codes.Internal, "failed to read data")
-		}
-
-		err = serv.Send(&v1.RequestPrivateDataResponse{
-			Success:  true,
-			Message:  "Data sent successfully",
-			Metadata: d.Metadata,
-			Data:     fileBytes,
-		})
-		if err != nil {
-			return status.Error(codes.Internal, "failed to send data")
-		}
-	}
-
-	return serv.Send(&v1.RequestPrivateDataResponse{
+	return serv.Send(&v1.DownloadDataResponse{
 		Success: true,
 		Message: "Data sent successfully",
 	})

@@ -22,6 +22,18 @@ func NewMenu(app *tview.Application, logger *slog.Logger, grpcClient *client.Grp
 		title:      "Goph Keeper Client",
 	}
 }
+func (m *Menu) errorHandler(err error) {
+	if err != nil {
+		m.logger.Error(err.Error())
+		modal := tview.NewModal().AddButtons([]string{"OK"})
+		modal.SetText(err.Error())
+		modal.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			m.ShowMainMenu()
+		})
+
+		m.app.SetRoot(modal, true)
+	}
+}
 
 func isRootPath(path string) bool {
 	if runtime.GOOS == "windows" {

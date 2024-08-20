@@ -17,7 +17,7 @@ func NewUserModel(db *gorm.DB, logger *slog.Logger) *UserModel {
 	return &UserModel{DB: *db, BaseModel: BaseModel{Logger: logger}}
 }
 
-func (u *UserModel) Create(userName string, password string) error {
+func (u *UserModel) Create(userName string, password string, sshPubKey string) error {
 	password, err := passwordhash.Hash(password)
 
 	if u.ifErrorLog(err) != nil {
@@ -28,7 +28,7 @@ func (u *UserModel) Create(userName string, password string) error {
 		return fmt.Errorf("user %s already exists", userName)
 	}
 
-	user := &entities.UserEntity{Username: userName, Password: password}
+	user := &entities.UserEntity{Username: userName, Password: password, SshPubKey: sshPubKey}
 	return u.DB.Create(user).Error
 }
 
