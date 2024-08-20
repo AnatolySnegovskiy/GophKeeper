@@ -18,36 +18,43 @@ func NewSshKeyGen() *SshKeyGen {
 	return &SshKeyGen{}
 }
 
-func (s *SshKeyGen) Generate() (string, error) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
-	if err != nil {
-		panic(err)
+func (s *SshKeyGen) Generate(login string) (string, error) {
+	dir := "./.ssh/" + login
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return "", err
 	}
 
-	privateKeyFile, err := os.Create("./.ssh/private_key.pem")
+	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		panic(err)
+		return "", err
+	}
+
+	privateKeyFile, err := os.Create(dir + "/private_key.pem")
+	if err != nil {
+		return "", err
 	}
 
 	defer privateKeyFile.Close()
 	privateKeyPEM := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}
 	if err := pem.Encode(privateKeyFile, privateKeyPEM); err != nil {
-		panic(err)
+		return "", err
 	}
 
 	publicKey := privateKey.PublicKey
 	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&publicKey)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
+
 	publicKeyPEM := &pem.Block{Type: "PUBLIC KEY", Bytes: publicKeyBytes}
-	publicKeyFile, err := os.Create("./.ssh/public_key.pem")
+	publicKeyFile, err := os.Create(dir + "/public_key.pem")
 	if err != nil {
-		panic(err)
+		return "", err
 	}
+
 	defer publicKeyFile.Close()
 	if err := pem.Encode(publicKeyFile, publicKeyPEM); err != nil {
-		panic(err)
+		return "", err
 	}
 
 	if _, err := publicKeyFile.Seek(0, io.SeekStart); err != nil {

@@ -41,7 +41,7 @@ func (c *GrpcClient) Authenticate(ctx context.Context, login string, password st
 		return nil, err
 	}
 
-	file, err := os.Open("./.ssh/private_key.pem")
+	file, err := os.Open("./.ssh/" + login + "/private_key.pem")
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (c *GrpcClient) Authenticate(ctx context.Context, login string, password st
 
 func (c *GrpcClient) RegisterUser(ctx context.Context, login string, password string) (*v1.RegisterUserResponse, error) {
 	ssh := services.NewSshKeyGen()
-	sshPub, err := ssh.Generate()
+	sshPub, err := ssh.Generate(login)
 	if err != nil {
 		return nil, err
 	}
