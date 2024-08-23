@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-func (c *GrpcClient) sendFile(stream v1.GophKeeperV1Service_UploadDataClient, filePath string, progressChan chan<- int) error {
+func (c *GrpcClient) sendFile(stream v1.GophKeeperV1Service_UploadFileClient, filePath string, progressChan chan<- int) error {
 	file, fileMetadata, err := c.preparedFile(filePath)
 	defer file.Close()
 	if err != nil {
@@ -42,10 +42,8 @@ func (c *GrpcClient) sendFile(stream v1.GophKeeperV1Service_UploadDataClient, fi
 		}
 
 		chunk := bufSender[:num]
-		err = stream.Send(&v1.UploadDataRequest{
-			Data:     chunk,
-			DataType: v1.DataType_DATA_TYPE_BINARY,
-			Metadata: string(metadataJson),
+		err = stream.Send(&v1.UploadFileRequest{
+			Data: chunk,
 		})
 
 		if err != nil && resendCounter > 3 {

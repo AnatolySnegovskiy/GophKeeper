@@ -77,13 +77,13 @@ func (c *GrpcClient) RegisterUser(ctx context.Context, login string, password st
 	})
 }
 
-func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, progressChan chan<- int) (*v1.UploadDataResponse, error) {
+func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, userPath string, progressChan chan<- int) (*v1.UploadDataResponse, error) {
 	authCTX, err := c.getAuthCTX(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	stream, err := c.grpcClient.UploadData(authCTX)
+	stream, err := c.grpcClient.UploadFile(authCTX)
 	if err != nil {
 		return nil, err
 	}
@@ -94,6 +94,17 @@ func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, progressCh
 	}
 
 	res, err := stream.CloseAndRecv()
+	if err != nil {
+		return nil, err
+	}
+
+	c.grpcClient.SetMetadataFile(authCTX, &v1.SetMetadataFileRequest{
+		Uuid: res.Uuid,
+		UserPath: userPath,
+		SizeChunks: ,
+		Metadata:
+	})
+
 	return res, err
 }
 
