@@ -7,16 +7,22 @@ import (
 	"path/filepath"
 )
 
-func GetFileMetadata(file *os.File) (entities.FileMetadata, error) {
-	buf := make([]byte, 512)
-	_, err := file.Read(buf)
+func GetFileMetadata(filePath string) (*entities.FileMetadata, error) {
+	file, err := os.Open(filePath)
 	if err != nil {
-		return entities.FileMetadata{}, err
+		return nil, err
+	}
+	defer file.Close()
+
+	buf := make([]byte, 512)
+	_, err = file.Read(buf)
+	if err != nil {
+		return nil, err
 	}
 
 	fileInfo, err := file.Stat()
 
-	return entities.FileMetadata{
+	return &entities.FileMetadata{
 		FileName:        fileInfo.Name(),
 		FileExtension:   filepath.Ext(fileInfo.Name()),
 		MemType:         http.DetectContentType(buf),

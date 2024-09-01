@@ -1,7 +1,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 	"goph_keeper/internal/services/entities"
 	"goph_keeper/internal/services/file_helper"
@@ -10,19 +9,14 @@ import (
 	"os"
 )
 
-func (c *GrpcClient) sendFile(stream v1.GophKeeperV1Service_UploadFileClient, filePath string, progressChan chan<- int) error {
-	file, fileMetadata, err := c.preparedFile(filePath)
+func (c *GrpcClient) sendFile(stream v1.GophKeeperV1Service_UploadFileClient, fileMetadata *entities.FileMetadata, filePath string, progressChan chan<- int) error {
+	file, err := c.preparedFile(fileMetadata, filePath)
 	defer file.Close()
 	if err != nil {
 		return err
 	}
 
-	metadataJson, err := json.Marshal(fileMetadata)
-	if err != nil {
-		return err
-	}
-
-	bufSender := make([]byte, 1024*1024)
+	bufSender := make([]byte, c.sizeChunk)
 	resendCounter := 0
 	var sentSize int64 = 0
 	lastProgress := 0
@@ -70,28 +64,22 @@ func (c *GrpcClient) sendFile(stream v1.GophKeeperV1Service_UploadFileClient, fi
 	return nil
 }
 
-func (c *GrpcClient) preparedFile(filePath string) (*os.File, entities.FileMetadata, error) {
+func (c *GrpcClient) preparedFile(metadata *entities.FileMetadata, filePath string) (*os.File, error) {
 	file, err := os.Open(filePath)
-
 	if err != nil {
-		return nil, entities.FileMetadata{}, err
+		return nil, err
 	}
 
-	fileMetadata, err := file_helper.GetFileMetadata(file)
-	if err != nil {
-		return nil, entities.FileMetadata{}, err
-	}
-
-	if !fileMetadata.IsCompressed {
-		return file, fileMetadata, nil
+	if !metadata.IsCompressed {
+		return file, nil
 	}
 
 	file, err = file_helper.CompressGZIP(file)
 	if err != nil {
-		return nil, entities.FileMetadata{}, err
+		return nil, err
 	}
 
-	fileMetadata.CompressionType = "gzip"
+	metadata.CompressionType = "gzip"
 
-	return file, fileMetadata, err
+	return file, err
 }

@@ -2,9 +2,11 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"goph_keeper/internal/services"
+	"goph_keeper/internal/services/file_helper"
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"io"
 	"log/slog"
@@ -16,13 +18,15 @@ type GrpcClient struct {
 	login      string
 	password   string
 	logger     *slog.Logger
+	sizeChunk  int32
 }
 
 func NewGrpcClient(logger *slog.Logger, conn *grpc.ClientConn, login string, password string) *GrpcClient {
 	client := &GrpcClient{
-		login:    login,
-		password: password,
-		logger:   logger,
+		login:     login,
+		password:  password,
+		logger:    logger,
+		sizeChunk: 1024 * 1024,
 	}
 
 	client.grpcClient = v1.NewGophKeeperV1ServiceClient(conn)
@@ -77,7 +81,7 @@ func (c *GrpcClient) RegisterUser(ctx context.Context, login string, password st
 	})
 }
 
-func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, userPath string, progressChan chan<- int) (*v1.UploadDataResponse, error) {
+func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, userPath string, progressChan chan<- int) (*v1.SetMetadataFileResponse, error) {
 	authCTX, err := c.getAuthCTX(ctx)
 	if err != nil {
 		return nil, err
@@ -88,24 +92,32 @@ func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, userPath s
 		return nil, err
 	}
 
-	err = c.sendFile(stream, filePath, progressChan)
+	fileMetadata, err := file_helper.GetFileMetadata(filePath)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := stream.CloseAndRecv()
+	err = c.sendFile(stream, fileMetadata, filePath, progressChan)
 	if err != nil {
 		return nil, err
 	}
 
-	c.grpcClient.SetMetadataFile(authCTX, &v1.SetMetadataFileRequest{
-		Uuid: res.Uuid,
-		UserPath: userPath,
-		SizeChunks: ,
-		Metadata:
+	responceFileSender, err := stream.CloseAndRecv()
+	if err != nil {
+		return nil, err
+	}
+
+	metadataJson, err := json.Marshal(fileMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.grpcClient.SetMetadataFile(authCTX, &v1.SetMetadataFileRequest{
+		Uuid:       responceFileSender.Uuid,
+		UserPath:   userPath,
+		SizeChunks: c.sizeChunk,
+		Metadata:   string(metadataJson),
 	})
-
-	return res, err
 }
 
 func (c *GrpcClient) getAuthCTX(ctx context.Context) (context.Context, error) {
@@ -118,4 +130,15 @@ func (c *GrpcClient) getAuthCTX(ctx context.Context) (context.Context, error) {
 	md := metadata.New(map[string]string{"authorization": token.JwtToken})
 	authCTX := metadata.NewOutgoingContext(ctx, md)
 	return authCTX, nil
+}
+
+func (c *GrpcClient) GetStoreDataList(ctx context.Context) (*v1.GetStoreDataListResponse, error) {
+	authCTX, err := c.getAuthCTX(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.grpcClient.GetStoreDataList(authCTX, &v1.GetStoreDataListRequest{
+		DataType: v1.DataType_DATA_TYPE_BINARY,
+	})
 }

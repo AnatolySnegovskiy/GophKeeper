@@ -22,6 +22,7 @@ func NewMenu(app *tview.Application, logger *slog.Logger, grpcClient *client.Grp
 		title:      "Goph Keeper Client",
 	}
 }
+
 func (m *Menu) errorHandler(err error) {
 	if err != nil {
 		m.logger.Error(err.Error())

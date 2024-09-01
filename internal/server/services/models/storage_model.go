@@ -16,8 +16,8 @@ func NewStorageModel(db *gorm.DB, logger *slog.Logger) *StorageModel {
 	return &StorageModel{DB: *db, BaseModel: BaseModel{Logger: logger}}
 }
 
-func (s *StorageModel) Create(userID uint, path string, metaData string, dataType v1.DataType) error {
-	storage := &entities.StorageEntity{UserID: userID, Path: path, Metadata: metaData, DataType: dataType}
+func (s *StorageModel) Create(userID uint, uuid string, path string) error {
+	storage := &entities.StorageEntity{UserID: userID, Uuid: uuid, Path: path}
 	return s.ifErrorLog(s.DB.Create(storage).Error)
 }
 
@@ -26,7 +26,25 @@ func (s *StorageModel) GetListByDataType(u uint, dataType v1.DataType) ([]*entit
 	return storages, s.ifErrorLog(s.DB.Where("user_id = ? AND data_type = ?", u, dataType).Find(&storages).Error)
 }
 
-func (s *StorageModel) GetListByUuid(u uint, uuid string) (*entities.StorageEntity, error) {
+func (s *StorageModel) GetByUuid(u uint, uuid string) (*entities.StorageEntity, error) {
 	storage := &entities.StorageEntity{}
 	return storage, s.ifErrorLog(s.DB.Where("user_id = ? AND uuid = ?", u, uuid).First(&storage).Error)
+}
+
+func (s *StorageModel) UpdateMetadata(uuid string, dataType v1.DataType, metadata string, path string, chunks int32) error {
+	storage := &entities.StorageEntity{}
+	return s.
+		ifErrorLog(s.DB.Where("uuid = ?", uuid).
+			First(&storage).
+			Updates(
+				entities.StorageEntity{
+					DataType:           dataType,
+					Metadata:           metadata,
+					Path:               path,
+					SizeBytesPartition: int64(chunks)}).Error,
+		)
+}
+
+func (s *StorageModel) Delete(u uint, uuid string) error {
+	return s.ifErrorLog(s.DB.Where("user_id = ? AND uuid = ?", u, uuid).Delete(&entities.StorageEntity{}).Error)
 }

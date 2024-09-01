@@ -19,13 +19,15 @@ func handleError(logger *slog.Logger, err error) {
 }
 
 func main() {
-	file, err := os.OpenFile("log.json", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile("log.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Failed to open log file")
 		os.Exit(1)
 	}
 	defer file.Close()
 	logger := slog.New(slog.NewJSONHandler(file, nil))
+	logger.Info("Log file opened")
+
 	conn, _ := grpc.NewClient("127.0.0.1:8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer conn.Close()
 	c := client.NewGrpcClient(logger, conn, "Test", "Test")

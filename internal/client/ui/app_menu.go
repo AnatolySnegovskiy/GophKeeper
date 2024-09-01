@@ -15,7 +15,7 @@ func (m *Menu) showAppMenu() {
 
 	list := tview.NewList().
 		AddItem("1. Файлы", "", '1', func() {
-			m.showSendFileForm()
+			m.showFilesMenu()
 		}).
 		AddItem("2. Пароли", "", '2', func() {
 		}).
@@ -63,9 +63,9 @@ func (m *Menu) showSendFileForm() {
 		m.app.SetRoot(flex, true)
 
 		progressChan := make(chan int)
-
+		userPath := ""
 		go func() {
-			res, err := m.grpcClient.UploadFile(context.Background(), filePath, progressChan)
+			res, err := m.grpcClient.UploadFile(context.Background(), filePath, userPath, progressChan)
 			if err != nil {
 				m.app.QueueUpdateDraw(func() {
 					info.SetText(fmt.Sprintf("[red]Error: %s", err))
@@ -73,7 +73,7 @@ func (m *Menu) showSendFileForm() {
 			}
 			close(progressChan)
 			m.app.QueueUpdateDraw(func() {
-				info.SetText(fmt.Sprintf("[green]Success: %s", res.Message))
+				info.SetText(fmt.Sprintf("[green]Success: %t", res.Success))
 			})
 		}()
 
