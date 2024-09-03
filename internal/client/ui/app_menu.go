@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"path/filepath"
 )
 
 func (m *Menu) showAppMenu() {
@@ -15,7 +16,7 @@ func (m *Menu) showAppMenu() {
 
 	list := tview.NewList().
 		AddItem("1. Файлы", "", '1', func() {
-			m.showFilesMenu()
+			m.showFilesMenu(string(filepath.Separator))
 		}).
 		AddItem("2. Пароли", "", '2', func() {
 		}).

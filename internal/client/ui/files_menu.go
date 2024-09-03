@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func (m *Menu) showFilesMenu() {
+func (m *Menu) showFilesMenu(currentPath string) {
 	m.logger.Info("Show files menu")
 	title := tview.NewTextView().
 		SetText("Files").
@@ -22,7 +22,7 @@ func (m *Menu) showFilesMenu() {
 	m.errorHandler(err)
 
 	vDirectories := buildVirtualDirectories(listFiles.Entries)
-	m.showVirtualDirectoryContents(vDirectories, string(filepath.Separator), list)
+	m.showVirtualDirectoryContents(vDirectories, currentPath, list)
 
 	mainLayout := tview.NewFlex().
 		SetDirection(tview.FlexRow).
@@ -32,27 +32,28 @@ func (m *Menu) showFilesMenu() {
 	m.app.SetRoot(mainLayout, true).SetFocus(list)
 }
 
-func buildVirtualDirectories(entries []*v1.ListDataEntry) []string {
-	vDirs := make([]string, len(entries))
+func buildVirtualDirectories(entries []*v1.ListDataEntry) map[string]*v1.ListDataEntry {
+	vDirs := map[string]*v1.ListDataEntry{}
+
 	for _, entry := range entries {
-		vDirs = append(vDirs, entry.UserPath)
+		vDirs[entry.UserPath] = entry
 	}
 
 	return vDirs
 }
 
-func (m *Menu) showVirtualDirectoryContents(vDirs []string, currentPath string, list *tview.List) {
-	list.Clear()
+func (m *Menu) showVirtualDirectoryContents(vDirs map[string]*v1.ListDataEntry, currentPath string, viewList *tview.List) {
+	viewList.Clear()
 	subDirs := []string{}
-	files := []string{}
+	files := map[string]*v1.ListDataEntry{}
 
 	parentPath := filepath.Dir(currentPath)
-	list.AddItem("..", "", 0, func() {
-		m.showVirtualDirectoryContents(vDirs, parentPath, list)
+	viewList.AddItem("..", "", 0, func() {
+		m.showVirtualDirectoryContents(vDirs, parentPath, viewList)
 	})
 
 	// Проходим по всем путям в vDirs
-	for _, path := range vDirs {
+	for path, entry := range vDirs {
 		dir := filepath.Dir(path)
 		file := filepath.Base(path)
 		m.logger.Info(fmt.Sprintf("dir: %s, file: %s", dir, file))
@@ -62,7 +63,7 @@ func (m *Menu) showVirtualDirectoryContents(vDirs []string, currentPath string, 
 		}
 
 		if dir == currentPath {
-			files = append(files, file)
+			files[file] = entry
 		} else {
 			if currentPath != string(filepath.Separator) {
 				dir = strings.ReplaceAll(dir, currentPath, "")
@@ -79,16 +80,23 @@ func (m *Menu) showVirtualDirectoryContents(vDirs []string, currentPath string, 
 	for _, dir := range subDirs {
 		m.logger.Info(fmt.Sprintf("currentPath: %s, dir: %s", currentPath, dir))
 		pathDir := dir
-		list.AddItem(pathDir+string(filepath.Separator), "", 0, func() {
-			m.showVirtualDirectoryContents(vDirs, filepath.Join(currentPath, pathDir), list)
+		viewList.AddItem(pathDir+string(filepath.Separator), "", 0, func() {
+			m.showVirtualDirectoryContents(vDirs, filepath.Join(currentPath, pathDir), viewList)
 		})
 	}
 
 	// Добавляем файлы в список
-	for _, file := range files {
-		fileItem := file
-		list.AddItem(fileItem, "", 0, func() {
-			// Обработка выбора файла (например, открытие или отображение его содержимого)
+	for name, e := range files {
+		fileName := name
+		viewList.AddItem(fileName, "", 0, func() {
+			modal := tview.NewModal().SetText(fmt.Sprintf("Download File %s?", fileName)).AddButtons([]string{"Yes", "No"}).SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+				if buttonLabel == "Yes" {
+					m.showDownloadFileForm(e)
+				} else if buttonLabel == "No" {
+					m.showFilesMenu(currentPath)
+				}
+			})
+			m.app.SetRoot(modal, true)
 		})
 	}
 }

@@ -31,7 +31,6 @@ func main() {
 	conn, _ := grpc.NewClient("127.0.0.1:8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer conn.Close()
 	c := client.NewGrpcClient(logger, conn, "Test", "Test")
-
 	app := tview.NewApplication()
 	menu := ui.NewMenu(app, logger, c)
 	menu.ShowMainMenu()

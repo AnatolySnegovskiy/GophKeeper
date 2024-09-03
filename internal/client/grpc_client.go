@@ -3,12 +3,15 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	entities2 "goph_keeper/internal/server/services/entities"
 	"goph_keeper/internal/services"
 	"goph_keeper/internal/services/file_helper"
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"io"
+	"log"
 	"log/slog"
 	"os"
 )
@@ -141,4 +144,74 @@ func (c *GrpcClient) GetStoreDataList(ctx context.Context) (*v1.GetStoreDataList
 	return c.grpcClient.GetStoreDataList(authCTX, &v1.GetStoreDataListRequest{
 		DataType: v1.DataType_DATA_TYPE_BINARY,
 	})
+}
+
+func (c *GrpcClient) DownloadFile(ctx context.Context, uuid string, path string, progressChan chan<- int) error {
+	authCTX, err := c.getAuthCTX(ctx)
+	if err != nil {
+		return err
+	}
+	metadataResponse, err := c.grpcClient.GetMetadataFile(authCTX, &v1.GetMetadataFileRequest{
+		Uuid: uuid,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	stream, err := c.grpcClient.DownloadFile(authCTX, &v1.DownloadFileRequest{
+		Uuid: uuid,
+	})
+
+	if err != nil {
+		log.Fatalf("could not download file: %v", err)
+	}
+
+	metadataStruct := entities2.FileMetadata{}
+	err = json.Unmarshal([]byte(metadataResponse.Metadata), &metadataStruct)
+
+	file, err := os.Create(path + "/" + metadataStruct.FileName + metadataStruct.FileExtension)
+	if err != nil {
+		log.Fatalf("could not create file: %v", err)
+	}
+
+	defer file.Close()
+	downloadedBytes := 0
+
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("failed to receive response: %v", err)
+		}
+
+		if resp.Status == v1.Status_STATUS_PROCESSING {
+			writingBytes, err := file.Write(resp.Data)
+			if err != nil {
+				return fmt.Errorf("failed to write data to file: %v", err)
+			}
+
+			downloadedBytes += writingBytes
+			progressChan <- int(float32(downloadedBytes) / float32(metadataStruct.FileSize) * 100)
+		}
+
+		if resp.Status == v1.Status_STATUS_SUCCESS {
+			progressChan <- 100
+			return nil
+		}
+
+		if resp.Status == v1.Status_STATUS_FAIL {
+			progressChan <- 0
+			return fmt.Errorf("failed to receive response: %v", err)
+		}
+
+		if resp.Status == v1.Status_STATUS_CANCELLED {
+			progressChan <- 0
+			return fmt.Errorf("cancelled file download")
+		}
+	}
+
+	return nil
 }
