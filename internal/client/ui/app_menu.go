@@ -92,5 +92,5 @@ func (m *Menu) showSendFileForm() {
 		}()
 	}
 
-	m.explore(f)
+	m.explore(File, f)
 }

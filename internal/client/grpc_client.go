@@ -11,7 +11,6 @@ import (
 	"goph_keeper/internal/services/file_helper"
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"io"
-	"log"
 	"log/slog"
 	"os"
 )
@@ -164,7 +163,7 @@ func (c *GrpcClient) DownloadFile(ctx context.Context, uuid string, path string,
 	})
 
 	if err != nil {
-		log.Fatalf("could not download file: %v", err)
+		return fmt.Errorf("failed to download file: %v", err)
 	}
 
 	metadataStruct := entities2.FileMetadata{}
@@ -172,14 +171,17 @@ func (c *GrpcClient) DownloadFile(ctx context.Context, uuid string, path string,
 
 	file, err := os.Create(path + "/" + metadataStruct.FileName + metadataStruct.FileExtension)
 	if err != nil {
-		log.Fatalf("could not create file: %v", err)
+		return fmt.Errorf("failed to create file: %v", err)
 	}
 
 	defer file.Close()
 	downloadedBytes := 0
-
 	for {
 		resp, err := stream.Recv()
+		if resp == nil {
+			return fmt.Errorf("failed to receive response: %v", err)
+		}
+
 		if err == io.EOF {
 			break
 		}

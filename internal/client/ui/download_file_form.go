@@ -7,7 +7,7 @@ import (
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
 )
 
-func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry) {
+func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry, rollbackFilesMenu func()) {
 	progressBar := NewProgressBar(100)
 	info := tview.NewTextView().
 		SetDynamicColors(true).
@@ -52,11 +52,11 @@ func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry) {
 			}
 			if progressBar.current >= 100 {
 				form.AddButton("OK", func() {
-					rollback()
+					rollbackFilesMenu()
 				})
 			}
 		}()
 	}
 
-	m.explore(f)
+	m.explore(Dir, f)
 }

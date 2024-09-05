@@ -85,13 +85,14 @@ func (m *Menu) showVirtualDirectoryContents(vDirs map[string]*v1.ListDataEntry, 
 		})
 	}
 
-	// Добавляем файлы в список
 	for name, e := range files {
 		fileName := name
 		viewList.AddItem(fileName, "", 0, func() {
 			modal := tview.NewModal().SetText(fmt.Sprintf("Download File %s?", fileName)).AddButtons([]string{"Yes", "No"}).SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 				if buttonLabel == "Yes" {
-					m.showDownloadFileForm(e)
+					m.showDownloadFileForm(e, func() {
+						m.showFilesMenu(currentPath)
+					})
 				} else if buttonLabel == "No" {
 					m.showFilesMenu(currentPath)
 				}
