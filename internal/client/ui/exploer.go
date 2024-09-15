@@ -51,7 +51,9 @@ func (m *Menu) explore(typeSelection TypeSelection, callback func(filePath strin
 			m.showDirectoryContents(exp, callback)
 		})
 	}
-
+	exp.list.AddItem("Back", "", 0, func() {
+		m.showFilesMenu()
+	})
 	layout := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(exp.list, 0, 1, true)

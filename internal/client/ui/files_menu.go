@@ -1,28 +1,25 @@
 package ui
 
 import (
-	"context"
-	"fmt"
 	"github.com/rivo/tview"
-	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"path/filepath"
-	"strings"
 )
 
-func (m *Menu) showFilesMenu(currentPath string) {
-	m.logger.Info("Show files menu")
+func (m *Menu) showFilesMenu() {
 	title := tview.NewTextView().
-		SetText("Files").
+		SetText("Files Menu").
 		SetTextAlign(tview.AlignCenter).
 		SetDynamicColors(true)
 
-	list := tview.NewList()
-	listFiles, err := m.grpcClient.GetStoreDataList(context.Background())
-
-	m.errorHandler(err)
-
-	vDirectories := buildVirtualDirectories(listFiles.Entries)
-	m.showVirtualDirectoryContents(vDirectories, currentPath, list)
+	list := tview.NewList().
+		AddItem("Download", "Download a file", 'd', func() {
+			m.showServerFilesMenu(string(filepath.Separator))
+		}).
+		AddItem("Upload", "Upload a file", 'u', func() {
+			m.showSendFileForm()
+		}).AddItem("Back", "", 'e', func() {
+		m.showAppMenu()
+	})
 
 	mainLayout := tview.NewFlex().
 		SetDirection(tview.FlexRow).
@@ -30,74 +27,4 @@ func (m *Menu) showFilesMenu(currentPath string) {
 		AddItem(list, 0, 1, true)
 
 	m.app.SetRoot(mainLayout, true).SetFocus(list)
-}
-
-func buildVirtualDirectories(entries []*v1.ListDataEntry) map[string]*v1.ListDataEntry {
-	vDirs := map[string]*v1.ListDataEntry{}
-
-	for _, entry := range entries {
-		vDirs[entry.UserPath] = entry
-	}
-
-	return vDirs
-}
-
-func (m *Menu) showVirtualDirectoryContents(vDirs map[string]*v1.ListDataEntry, currentPath string, viewList *tview.List) {
-	viewList.Clear()
-	subDirs := []string{}
-	files := map[string]*v1.ListDataEntry{}
-
-	parentPath := filepath.Dir(currentPath)
-	viewList.AddItem("..", "", 0, func() {
-		m.showVirtualDirectoryContents(vDirs, parentPath, viewList)
-	})
-
-	// Проходим по всем путям в vDirs
-	for path, entry := range vDirs {
-		dir := filepath.Dir(path)
-		file := filepath.Base(path)
-		m.logger.Info(fmt.Sprintf("dir: %s, file: %s", dir, file))
-		m.logger.Info(fmt.Sprintf("currentPath: %s", currentPath))
-		if !strings.Contains(dir, currentPath) {
-			continue
-		}
-
-		if dir == currentPath {
-			files[file] = entry
-		} else {
-			if currentPath != string(filepath.Separator) {
-				dir = strings.ReplaceAll(dir, currentPath, "")
-			}
-			parts := strings.Split(dir, string(filepath.Separator))
-			if len(parts) > 1 {
-				subDirs = append(subDirs, parts[1])
-			}
-		}
-	}
-
-	m.logger.Info(fmt.Sprintf("currentPath: %s, subDirs: %s, files: %s", currentPath, subDirs, files))
-
-	for _, dir := range subDirs {
-		m.logger.Info(fmt.Sprintf("currentPath: %s, dir: %s", currentPath, dir))
-		pathDir := dir
-		viewList.AddItem(pathDir+string(filepath.Separator), "", 0, func() {
-			m.showVirtualDirectoryContents(vDirs, filepath.Join(currentPath, pathDir), viewList)
-		})
-	}
-
-	for name, e := range files {
-		fileName := name
-		viewList.AddItem(fileName, "", 0, func() {
-			modal := tview.NewModal().SetText(fmt.Sprintf("Download File %s?", fileName)).AddButtons([]string{"Yes", "No"}).SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-				if buttonLabel == "Yes" {
-					m.showDownloadFileForm(e, func() {
-						m.showFilesMenu(currentPath)
-					})
-				} else if buttonLabel == "No" {
-					m.showFilesMenu(currentPath)
-				}
-			})
-			m.app.SetRoot(modal, true)
-		})
-	}
 }

@@ -119,6 +119,7 @@ func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, userPath s
 		UserPath:   userPath,
 		SizeChunks: c.sizeChunk,
 		Metadata:   string(metadataJson),
+		DataType:   v1.DataType_DATA_TYPE_BINARY,
 	})
 }
 
@@ -169,7 +170,7 @@ func (c *GrpcClient) DownloadFile(ctx context.Context, uuid string, path string,
 	metadataStruct := entities2.FileMetadata{}
 	err = json.Unmarshal([]byte(metadataResponse.Metadata), &metadataStruct)
 
-	file, err := os.Create(path + "/" + metadataStruct.FileName + metadataStruct.FileExtension)
+	file, err := os.Create(path + "/" + metadataStruct.FileName)
 	if err != nil {
 		return fmt.Errorf("failed to create file: %v", err)
 	}
