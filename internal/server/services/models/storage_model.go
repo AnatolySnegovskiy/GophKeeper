@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"goph_keeper/internal/server/services/entities"
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"gorm.io/gorm"
@@ -33,8 +34,9 @@ func (s *StorageModel) GetByUuid(u uint, uuid string) (*entities.StorageEntity, 
 
 func (s *StorageModel) UpdateMetadata(uuid string, dataType v1.DataType, metadata string, userPath string, chunks int32) error {
 	storage := &entities.StorageEntity{}
+
 	if err := s.DB.Where("uuid = ?", uuid).First(&storage).Error; err != nil {
-		return s.ifErrorLog(err)
+		return s.ifErrorLog(fmt.Errorf("storage not found : %v", err))
 	}
 
 	updates := map[string]interface{}{

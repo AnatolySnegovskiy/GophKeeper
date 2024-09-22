@@ -32,7 +32,7 @@ func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry, rollbackFilesMenu f
 		progressChan := make(chan int)
 
 		go func() {
-			err := m.grpcClient.DownloadFile(context.Background(), entry.Uuid, directoryPath, progressChan)
+			_, err := m.grpcClient.DownloadFile(context.Background(), entry.Uuid, directoryPath, progressChan)
 			if err != nil {
 				m.app.QueueUpdateDraw(func() {
 					info.SetText(fmt.Sprintf("[red]Error: %s", err))

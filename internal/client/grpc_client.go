@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/crypto/chacha20"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	entities2 "goph_keeper/internal/server/services/entities"
 	"goph_keeper/internal/services"
+	"goph_keeper/internal/services/entities"
 	"goph_keeper/internal/services/file_helper"
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"io"
@@ -46,26 +47,19 @@ func (c *GrpcClient) Authenticate(ctx context.Context, login string, password st
 	if err != nil || tokenSsh == nil || !tokenSsh.Success {
 		return nil, err
 	}
-
-	file, err := os.Open("./.ssh/" + login + "/private_key.pem")
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	content, err := io.ReadAll(file)
+	content, err := GetPrivateKey(login)
 	if err != nil {
 		return nil, err
 	}
 
 	ssh := services.NewSshKeyGen()
-	token, err := ssh.DecryptionFunction(tokenSsh.Token, string(content))
+	token, err := ssh.DecryptionFunction([]byte(tokenSsh.Token), content)
 	if err != nil {
 		return nil, err
 	}
 
 	return c.grpcClient.Verify2FA(ctx, &v1.Verify2FARequest{
-		Token: token,
+		Token: string(token),
 	})
 }
 
@@ -83,7 +77,7 @@ func (c *GrpcClient) RegisterUser(ctx context.Context, login string, password st
 	})
 }
 
-func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, userPath string, progressChan chan<- int) (*v1.SetMetadataFileResponse, error) {
+func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, userPath string, fileType v1.DataType, progressChan chan<- int) (*v1.SetMetadataFileResponse, error) {
 	authCTX, err := c.getAuthCTX(ctx)
 	if err != nil {
 		return nil, err
@@ -119,7 +113,7 @@ func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, userPath s
 		UserPath:   userPath,
 		SizeChunks: c.sizeChunk,
 		Metadata:   string(metadataJson),
-		DataType:   v1.DataType_DATA_TYPE_BINARY,
+		DataType:   fileType,
 	})
 }
 
@@ -135,28 +129,28 @@ func (c *GrpcClient) getAuthCTX(ctx context.Context) (context.Context, error) {
 	return authCTX, nil
 }
 
-func (c *GrpcClient) GetStoreDataList(ctx context.Context) (*v1.GetStoreDataListResponse, error) {
+func (c *GrpcClient) GetStoreDataList(ctx context.Context, fileType v1.DataType) (*v1.GetStoreDataListResponse, error) {
 	authCTX, err := c.getAuthCTX(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	return c.grpcClient.GetStoreDataList(authCTX, &v1.GetStoreDataListRequest{
-		DataType: v1.DataType_DATA_TYPE_BINARY,
+		DataType: fileType,
 	})
 }
 
-func (c *GrpcClient) DownloadFile(ctx context.Context, uuid string, path string, progressChan chan<- int) error {
+func (c *GrpcClient) DownloadFile(ctx context.Context, uuid string, path string, progressChan chan<- int) (*os.File, error) {
 	authCTX, err := c.getAuthCTX(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	metadataResponse, err := c.grpcClient.GetMetadataFile(authCTX, &v1.GetMetadataFileRequest{
 		Uuid: uuid,
 	})
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	stream, err := c.grpcClient.DownloadFile(authCTX, &v1.DownloadFileRequest{
@@ -164,57 +158,101 @@ func (c *GrpcClient) DownloadFile(ctx context.Context, uuid string, path string,
 	})
 
 	if err != nil {
-		return fmt.Errorf("failed to download file: %v", err)
+		return nil, fmt.Errorf("failed to download file: %v", err)
 	}
 
-	metadataStruct := entities2.FileMetadata{}
+	metadataStruct := entities.FileMetadata{}
 	err = json.Unmarshal([]byte(metadataResponse.Metadata), &metadataStruct)
 
 	file, err := os.Create(path + "/" + metadataStruct.FileName)
 	if err != nil {
-		return fmt.Errorf("failed to create file: %v", err)
+		return nil, fmt.Errorf("failed to create file: %v", err)
 	}
 
-	defer file.Close()
+	defer file.Seek(0, io.SeekStart)
 	downloadedBytes := 0
+
+	// Получение nonce
+	resp, err := stream.Recv()
+	if err != nil {
+		return nil, fmt.Errorf("failed to receive nonce: %v", err)
+	}
+	nonce := resp.Data
+
+	// Генерация ключа для ChaCha20
+	key := []byte("example key 1234example key 1234") // 32 байта
+
+	cipher, err := chacha20.NewUnauthenticatedCipher(key, nonce)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cipher: %v", err)
+	}
+
 	for {
 		resp, err := stream.Recv()
 		if resp == nil {
-			return fmt.Errorf("failed to receive response: %v", err)
+			return nil, fmt.Errorf("failed to receive response: %v", err)
 		}
 
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("failed to receive response: %v", err)
+			return nil, fmt.Errorf("failed to receive response: %v", err)
 		}
 
 		if resp.Status == v1.Status_STATUS_PROCESSING {
-			writingBytes, err := file.Write(resp.Data)
+			encryptedChunk := resp.Data
+			decryptedChunk := make([]byte, len(encryptedChunk))
+			cipher.XORKeyStream(decryptedChunk, encryptedChunk)
+
+			writingBytes, err := file.Write(decryptedChunk)
 			if err != nil {
-				return fmt.Errorf("failed to write data to file: %v", err)
+				return nil, fmt.Errorf("failed to write data to file: %v", err)
 			}
 
 			downloadedBytes += writingBytes
-			progressChan <- int(float32(downloadedBytes) / float32(metadataStruct.FileSize) * 100)
+
+			if progressChan != nil {
+				progressChan <- int(float32(downloadedBytes) / float32(metadataStruct.FileSize) * 100)
+			}
 		}
 
 		if resp.Status == v1.Status_STATUS_SUCCESS {
-			progressChan <- 100
-			return nil
+			if progressChan != nil {
+				progressChan <- 100
+			}
+			return file, nil
 		}
 
 		if resp.Status == v1.Status_STATUS_FAIL {
-			progressChan <- 0
-			return fmt.Errorf("failed to receive response: %v", err)
+			if progressChan != nil {
+				progressChan <- 0
+			}
+			return nil, fmt.Errorf("failed to receive response: %v", err)
 		}
 
 		if resp.Status == v1.Status_STATUS_CANCELLED {
-			progressChan <- 0
-			return fmt.Errorf("cancelled file download")
+			if progressChan != nil {
+				progressChan <- 0
+			}
+			return nil, fmt.Errorf("cancelled file download")
 		}
 	}
 
-	return nil
+	return file, nil
+}
+
+func (c *GrpcClient) DeleteFile(background context.Context, uuid string) error {
+
+	authCTX, err := c.getAuthCTX(background)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = c.grpcClient.DeleteFile(authCTX, &v1.DeleteFileRequest{
+		Uuid: uuid,
+	})
+
+	return err
 }

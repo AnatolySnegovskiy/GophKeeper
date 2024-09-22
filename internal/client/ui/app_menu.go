@@ -16,8 +16,10 @@ func (m *Menu) showAppMenu() {
 			m.showFilesMenu()
 		}).
 		AddItem("2. Пароли", "", '2', func() {
+			m.showPasswordMenu()
 		}).
 		AddItem("3. Карты", "", '2', func() {
+			m.showCardsMenu()
 		}).
 		SetSelectedFocusOnly(true)
 

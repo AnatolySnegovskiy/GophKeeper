@@ -17,7 +17,11 @@ func (m *Menu) showRegistrationForm() {
 		}).
 		AddButton("Register", func() {
 			res, err := m.grpcClient.RegisterUser(context.Background(), username, password)
-			m.errorHandler(err)
+			if err != nil {
+				m.errorHandler(err, func() {
+					m.showAuthorizationForm()
+				})
+			}
 
 			if res.Success {
 				m.showAuthorizationForm()

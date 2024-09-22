@@ -76,7 +76,16 @@ func (s *GrpcServer) AuthenticateUser(ctx context.Context, req *v1.AuthenticateU
 	if err == nil {
 		ssh := services.NewSshKeyGen()
 		randomToken = strconv.Itoa(int(user.ID * uint(rand.Uint32())))
-		token, err = ssh.EncryptMessage(randomToken, user.SshPubKey)
+		tokenByte, err := ssh.EncryptMessage([]byte(randomToken), user.SshPubKey)
+
+		if err != nil {
+			return &v1.AuthenticateUserResponse{
+				Success: false,
+				Token:   "",
+			}, err
+		}
+
+		token = string(tokenByte)
 	}
 
 	if token != "" {
@@ -144,7 +153,7 @@ func (s *GrpcServer) UploadFile(srv v1.GophKeeperV1Service_UploadFileServer) err
 
 		_, err = file.Write(data.GetData())
 		if err != nil {
-			return status.Error(codes.Internal, "failed to store data")
+			return status.Error(codes.Internal, "failed to write data to file")
 		}
 	}
 
@@ -152,7 +161,7 @@ func (s *GrpcServer) UploadFile(srv v1.GophKeeperV1Service_UploadFileServer) err
 
 	err = storageModel.Create(uint(userId), uuidFile, filename)
 	if err != nil {
-		return status.Error(codes.Internal, "failed to store data")
+		return status.Error(codes.Internal, "failed to store data "+err.Error())
 	}
 
 	return srv.SendAndClose(&v1.UploadFileResponse{
@@ -227,6 +236,19 @@ func (s *GrpcServer) DownloadFile(req *v1.DownloadFileRequest, serv v1.GophKeepe
 		return status.Error(codes.Internal, "failed to open data")
 	}
 	defer file.Close()
+	nonce := make([]byte, 12) // 12 bytes for nonce
+	if _, err := file.Read(nonce); err != nil {
+		return status.Error(codes.Internal, "failed read nonce")
+	}
+
+	err = serv.Send(&v1.DownloadFileResponse{
+		Status: v1.Status_STATUS_PROCESSING,
+		Data:   nonce,
+	})
+
+	if err != nil {
+		return status.Error(codes.Internal, "failed to send nonce")
+	}
 
 	buf := make([]byte, data.SizeBytesPartition)
 	for {
@@ -282,12 +304,12 @@ func (s *GrpcServer) DeleteFile(ctx context.Context, req *v1.DeleteFileRequest) 
 	storageModel := models.NewStorageModel(s.db, s.logger)
 	data, err := storageModel.GetByUuid(uint(userId), req.Uuid)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to delete data")
+		return nil, status.Error(codes.Internal, "file not found")
 	}
 
 	err = os.Remove(data.Path)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to delete data")
+		return nil, status.Error(codes.Internal, "failed to delete file")
 	}
 
 	err = storageModel.Delete(uint(userId), req.Uuid)

@@ -17,9 +17,12 @@ func (m *Menu) showServerFilesMenu(currentPath string) {
 		SetDynamicColors(true)
 
 	list := tview.NewList()
-	listFiles, err := m.grpcClient.GetStoreDataList(context.Background())
-
-	m.errorHandler(err)
+	listFiles, err := m.grpcClient.GetStoreDataList(context.Background(), v1.DataType_DATA_TYPE_BINARY)
+	if err != nil {
+		m.errorHandler(err, func() {
+			m.showServerFilesMenu(currentPath)
+		})
+	}
 
 	vDirectories := buildVirtualDirectories(listFiles.Entries)
 	m.showVirtualDirectoryContents(vDirectories, currentPath, list)

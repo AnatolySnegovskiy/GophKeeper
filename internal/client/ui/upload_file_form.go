@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/rivo/tview"
+	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 )
 
 func (m *Menu) showSendFileForm() {
@@ -38,7 +39,7 @@ func (m *Menu) showSendFileForm() {
 			progressChan := make(chan int)
 
 			go func() {
-				res, err := m.grpcClient.UploadFile(context.Background(), filePath, userPath, progressChan)
+				res, err := m.grpcClient.UploadFile(context.Background(), filePath, userPath, v1.DataType_DATA_TYPE_BINARY, progressChan)
 				if err != nil {
 					m.app.QueueUpdateDraw(func() {
 						info.SetText(fmt.Sprintf("[red]Error: %s", err))

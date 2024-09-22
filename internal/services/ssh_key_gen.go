@@ -65,39 +65,39 @@ func (s *SshKeyGen) Generate(login string) (string, error) {
 	return string(content), nil
 }
 
-func (s *SshKeyGen) EncryptMessage(message string, publicKeyData string) (string, error) {
+func (s *SshKeyGen) EncryptMessage(message []byte, publicKeyData string) ([]byte, error) {
 	block, _ := pem.Decode([]byte(publicKeyData))
 	publicKey, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	rsaPubKey, _ := publicKey.(*rsa.PublicKey)
-	encryptedMessage, err := rsa.EncryptPKCS1v15(rand.Reader, rsaPubKey, []byte(message))
+	encryptedMessage, err := rsa.EncryptPKCS1v15(rand.Reader, rsaPubKey, message)
 	encodedMessage := base64.StdEncoding.EncodeToString(encryptedMessage)
-	return encodedMessage, nil
+	return []byte(encodedMessage), nil
 }
 
-func (s *SshKeyGen) DecryptionFunction(data string, privateKeyData string) (string, error) {
+func (s *SshKeyGen) DecryptionFunction(data []byte, privateKeyData string) ([]byte, error) {
 	block, _ := pem.Decode([]byte(privateKeyData))
 	if block == nil {
-		return "", errors.New("failed to decode PEM block")
+		return nil, errors.New("failed to decode PEM block")
 	}
 
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	decodedData, err := base64.StdEncoding.DecodeString(data)
+	decodedData, err := base64.StdEncoding.DecodeString(string(data))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	decryptedMessage, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, decodedData)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(decryptedMessage), nil
+	return decryptedMessage, nil
 }

@@ -23,17 +23,15 @@ func NewMenu(app *tview.Application, logger *slog.Logger, grpcClient *client.Grp
 	}
 }
 
-func (m *Menu) errorHandler(err error) {
-	if err != nil {
-		m.logger.Error(err.Error())
-		modal := tview.NewModal().AddButtons([]string{"OK"})
-		modal.SetText(err.Error())
-		modal.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			m.ShowMainMenu()
-		})
+func (m *Menu) errorHandler(err error, callback func()) {
+	m.logger.Error(err.Error())
+	modal := tview.NewModal().AddButtons([]string{"OK"})
+	modal.SetText(err.Error())
+	modal.SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+		callback()
+	})
 
-		m.app.SetRoot(modal, true)
-	}
+	m.app.SetRoot(modal, true)
 }
 
 func isRootPath(path string) bool {
