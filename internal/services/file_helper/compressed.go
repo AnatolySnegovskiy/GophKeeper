@@ -14,8 +14,8 @@ func CompressGZIP(file *os.File) (*os.File, error) {
 	}
 
 	gzipWriter := gzip.NewWriter(gzipFile)
-	gzipWriter.Close()
 	_, err = io.Copy(gzipWriter, file)
+	gzipWriter.Close()
 	if err != nil {
 		return nil, err
 	}

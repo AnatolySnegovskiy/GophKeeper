@@ -11,6 +11,7 @@ import (
 
 func (m *Menu) showCardsMenu() {
 	res, err := m.grpcClient.GetStoreDataList(context.Background(), v1.DataType_DATA_TYPE_CARD)
+
 	if err != nil {
 		m.errorHandler(err, func() {
 			m.showCardsMenu()

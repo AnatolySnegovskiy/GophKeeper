@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"golang.org/x/crypto/chacha20"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"goph_keeper/internal/services"
 	"goph_keeper/internal/services/entities"
@@ -24,7 +23,7 @@ type GrpcClient struct {
 	sizeChunk  int32
 }
 
-func NewGrpcClient(logger *slog.Logger, conn *grpc.ClientConn, login string, password string) *GrpcClient {
+func NewGrpcClient(logger *slog.Logger, grpcClient v1.GophKeeperV1ServiceClient, login string, password string) *GrpcClient {
 	client := &GrpcClient{
 		login:     login,
 		password:  password,
@@ -32,7 +31,7 @@ func NewGrpcClient(logger *slog.Logger, conn *grpc.ClientConn, login string, pas
 		sizeChunk: 1024 * 1024,
 	}
 
-	client.grpcClient = v1.NewGophKeeperV1ServiceClient(conn)
+	client.grpcClient = grpcClient
 	logger.Info("Connected to gRPC server")
 
 	return client
@@ -119,7 +118,6 @@ func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, userPath s
 
 func (c *GrpcClient) getAuthCTX(ctx context.Context) (context.Context, error) {
 	token, err := c.Authenticate(ctx, c.login, c.password)
-
 	if err != nil {
 		return nil, err
 	}

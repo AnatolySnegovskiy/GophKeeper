@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"goph_keeper/internal/client"
 	"goph_keeper/internal/client/ui"
+	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"log/slog"
 	"os"
 )
@@ -30,7 +31,7 @@ func main() {
 
 	conn, _ := grpc.NewClient("127.0.0.1:8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer conn.Close()
-	c := client.NewGrpcClient(logger, conn, "Test", "Test")
+	c := client.NewGrpcClient(logger, v1.NewGophKeeperV1ServiceClient(conn), "Test", "Test")
 	app := tview.NewApplication()
 	menu := ui.NewMenu(app, logger, c)
 	menu.ShowMainMenu()
