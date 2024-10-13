@@ -25,40 +25,47 @@ func TestShowAuthorizationForm(t *testing.T) {
 	menu.showAuthorizationForm()
 
 	focused := menu.app.GetFocus()
-	form, ok := focused.(*tview.InputField)
-	assert.True(t, ok, "expected root to be a tview.Form, but got %T", focused)
-
-	// Получаем обработчик ввода формы
-	formHandler := form.InputHandler()
-	assert.NotNil(t, formHandler, "expected form to have an InputHandler")
 
 	// Функция для симуляции нажатия клавиши
-	simulateKeyPress := func(key tcell.Key) {
+	simulateKeyPress := func(key tcell.Key, primitive tview.Primitive) {
+		handler := primitive.InputHandler()
 		event := tcell.NewEventKey(key, 0, 0)
-		formHandler(event, func(p tview.Primitive) {})
+		handler(event, func(p tview.Primitive) {})
 	}
 
 	// Симулируем ввод данных в поля формы
 	inputUsername := "testuser"
 	inputPassword := "testpass"
-
+	inputFormHandler := focused.InputHandler()
 	// Симулируем ввод имени пользователя
 	for _, r := range inputUsername {
-		formHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
+		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
-	simulateKeyPress(tcell.KeyTab) // Перейти к следующему полю
-
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyTab, focused) // Перейти к следующему полю
+	inputFormHandler = focused.InputHandler()
 	// Симулируем ввод пароля
 	for _, r := range inputPassword {
-		formHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
+		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
-	simulateKeyPress(tcell.KeyTab) // Перейти к кнопке Login
 
+	simulateKeyPress(tcell.KeyTab, focused) // Перейти к кнопке Login
+	focused = menu.app.GetFocus()
+	assert.IsType(t, &tview.Button{}, focused, "expected focused to be a tview.Form, but got %T", focused)
+	assert.Equal(t, "Login", focused.(*tview.Button).GetLabel(), "expected focused to be a tview.Form, but got %T", focused)
 	// Симулируем нажатие кнопки Login
-	simulateKeyPress(tcell.KeyEnter)
+	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected showAppMenu to be called")
 
-	simulateKeyPress(tcell.KeyTab) // Перейти к кнопке Cancel
-	simulateKeyPress(tcell.KeyEnter)
+	menu.showAuthorizationForm()
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyTab, focused) // Перейти к следующему полю
+	simulateKeyPress(tcell.KeyTab, focused) // Перейти к кнопке Login
+	simulateKeyPress(tcell.KeyTab, focused) // Перейти к кнопке Cancel
+	focused = menu.app.GetFocus()
+	assert.IsType(t, &tview.Button{}, focused, "expected focused to be a tview.Form, but got %T", focused)
+	assert.Equal(t, "Cancel", focused.(*tview.Button).GetLabel(), "expected focused to be a tview.Form, but got %T", focused)
+
+	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected ShowMainMenu to be called")
 }
