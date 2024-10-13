@@ -167,7 +167,13 @@ func (c *GrpcClient) DownloadFile(ctx context.Context, uuid string, path string,
 		return nil, fmt.Errorf("failed to create file: %v", err)
 	}
 
-	defer file.Seek(0, io.SeekStart)
+	defer func(file *os.File, offset int64, whence int) {
+		_, err := file.Seek(offset, whence)
+		if err != nil {
+			c.logger.Error(fmt.Sprintf("failed to seek file: %v", err))
+			return
+		}
+	}(file, 0, io.SeekStart)
 	downloadedBytes := 0
 
 	// Получение nonce
