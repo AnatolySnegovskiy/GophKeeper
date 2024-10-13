@@ -56,4 +56,20 @@ func TestCompressGZIP(t *testing.T) {
 	decompressedContent, err := io.ReadAll(gzipReader)
 	assert.NoError(t, err)
 	assert.Equal(t, content, decompressedContent)
+
+	// Additional tests for error handling
+
+	// Test with a non-existent file
+	nonExistentFile, err := os.Open("non_existent_file.txt")
+	assert.Error(t, err)
+	_, err = file_helper.CompressGZIP(nonExistentFile)
+	assert.Error(t, err)
+
+	// Test with a file that cannot be created for writing
+	badFile, err := os.CreateTemp("", "badfile_*.txt")
+	assert.NoError(t, err)
+	badFile.Close()
+	os.Remove(badFile.Name()) // Delete the file to simulate error
+	_, err = file_helper.CompressGZIP(badFile)
+	assert.Error(t, err)
 }
