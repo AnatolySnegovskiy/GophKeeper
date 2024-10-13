@@ -71,5 +71,9 @@ func TestShowAppMenu(t *testing.T) {
 	capturedEvent := menu.app.GetInputCapture()(event)
 	assert.Nil(t, capturedEvent, "expected capturedEvent to be nil")
 
+	event = tcell.NewEventKey(tcell.KeyTab, 0, 0)
+	capturedEvent = menu.app.GetInputCapture()(event)
+	assert.NotNil(t, capturedEvent, "expected capturedEvent to be nil")
+
 	clear()
 }
