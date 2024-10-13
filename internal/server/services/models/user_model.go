@@ -49,7 +49,7 @@ func (u *UserModel) Auth(username string, password string) (*entities.UserEntity
 		return nil, fmt.Errorf("user not found")
 	}
 
-	if ok, err := passwordhash.Verify(user.Password, password); err != nil || ok == false {
+	if ok, err := passwordhash.Verify(user.Password, password); err != nil || !ok {
 		_ = u.ifErrorLog(err)
 		return nil, fmt.Errorf("incorrect password")
 	}

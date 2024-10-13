@@ -3,22 +3,16 @@ package file_helper
 import (
 	"compress/gzip"
 	"io"
-	"log"
 	"os"
 )
 
 func CompressGZIP(file *os.File) (*os.File, error) {
 	gzipFile, err := os.CreateTemp("", "compressed_*.gz")
-	defer func(gzipFile *os.File) {
-		err := gzipFile.Close()
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
-	}(gzipFile)
 	if err != nil {
 		return nil, err
 	}
+
+	defer gzipFile.Close()
 
 	gzipWriter := gzip.NewWriter(gzipFile)
 	_, err = io.Copy(gzipWriter, file)

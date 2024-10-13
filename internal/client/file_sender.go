@@ -13,10 +13,11 @@ import (
 
 func (c *GrpcClient) sendFile(stream v1.GophKeeperV1Service_UploadFileClient, fileMetadata *entities.FileMetadata, filePath string, progressChan chan<- int) error {
 	file, err := c.preparedFile(fileMetadata, filePath)
-	defer file.Close()
 	if err != nil {
 		return err
 	}
+
+	defer file.Close()
 
 	bufSender := make([]byte, c.sizeChunk)
 	resendCounter := 0
