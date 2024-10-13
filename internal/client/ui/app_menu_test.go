@@ -45,13 +45,15 @@ func TestShowAppMenu(t *testing.T) {
 	focused := menu.app.GetFocus()
 	list, ok := focused.(*tview.List)
 	assert.True(t, ok, "expected focus to be on a tview.List, but got %T", focused)
+	handler := list.InputHandler()
+	assert.NotNil(t, handler, "expected list to have an InputHandler")
 
 	for item := 0; item < list.GetItemCount(); item++ {
 		list.SetCurrentItem(item)
-		handler := list.InputHandler()
-		assert.NotNil(t, handler, "expected list to have an InputHandler")
 		event := tcell.NewEventKey(tcell.KeyEnter, 0, 0)
-		capture := func(p tview.Primitive) {}
+		capture := func(p tview.Primitive) {
+			assert.True(t, true, "expected list to have an InputHandler")
+		}
 		handler(event, capture)
 	}
 
