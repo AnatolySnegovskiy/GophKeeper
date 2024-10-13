@@ -161,6 +161,9 @@ func (c *GrpcClient) DownloadFile(ctx context.Context, uuid string, path string,
 
 	metadataStruct := entities.FileMetadata{}
 	err = json.Unmarshal([]byte(metadataResponse.Metadata), &metadataStruct)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal metadata: %v", err)
+	}
 
 	file, err := os.Create(path + "/" + metadataStruct.FileName)
 	if err != nil {

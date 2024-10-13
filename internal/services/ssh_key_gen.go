@@ -74,6 +74,10 @@ func (s *SshKeyGen) EncryptMessage(message []byte, publicKeyData string) ([]byte
 
 	rsaPubKey, _ := publicKey.(*rsa.PublicKey)
 	encryptedMessage, err := rsa.EncryptPKCS1v15(rand.Reader, rsaPubKey, message)
+	if err != nil {
+		return nil, err
+	}
+
 	encodedMessage := base64.StdEncoding.EncodeToString(encryptedMessage)
 	return []byte(encodedMessage), nil
 }

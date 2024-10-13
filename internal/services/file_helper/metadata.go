@@ -21,6 +21,9 @@ func GetFileMetadata(filePath string) (*entities.FileMetadata, error) {
 	}
 
 	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
 
 	return &entities.FileMetadata{
 		FileName:        fileInfo.Name(),
