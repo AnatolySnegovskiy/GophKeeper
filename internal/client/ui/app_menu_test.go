@@ -33,6 +33,7 @@ func TestShowAppMenu(t *testing.T) {
 	for item := 0; item < list.GetItemCount(); item++ {
 		mainText, _ := list.GetItemText(item)
 		assert.Equal(t, mainText, testTitleList[item], focused)
+		list.SetCurrentItem(item)
 	}
 
 	assert.True(t, ok, "expected focus to be on a tview.List, but got %T", focused)
