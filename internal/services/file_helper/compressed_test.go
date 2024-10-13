@@ -38,6 +38,7 @@ func TestCompressGZIP(t *testing.T) {
 	defer os.Remove(compressedFile.Name())
 	compressedFilePath := compressedFile.Name()
 	compressedFile, err = os.Open(compressedFilePath) // Reopen the file for reading
+	assert.NoError(t, err)
 
 	// Verify the compressed file
 	compressedFileStat, err := compressedFile.Stat()
