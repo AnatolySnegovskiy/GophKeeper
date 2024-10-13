@@ -33,6 +33,7 @@ func TestShowAppMenu(t *testing.T) {
 	for item := 0; item < list.GetItemCount(); item++ {
 		mainText, _ := list.GetItemText(item)
 		assert.Equal(t, mainText, testTitleList[item], focused)
+		list.SetCurrentItem(item)
 		handler := list.InputHandler()
 		assert.NotNil(t, handler, "expected list to have an InputHandler")
 		event := tcell.NewEventKey(tcell.KeyEnter, 0, 0)
