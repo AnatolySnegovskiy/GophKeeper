@@ -51,5 +51,5 @@ func (m *Menu) showAuthorizationForm() {
 
 	form.SetBorder(true).SetTitle("Авторизация").SetTitleAlign(tview.AlignLeft)
 
-	m.app.SetRoot(form, true)
+	m.app.SetRoot(form, true).SetFocus(form)
 }
