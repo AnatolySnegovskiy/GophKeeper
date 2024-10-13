@@ -22,7 +22,11 @@ func CompressGZIP(file *os.File) (*os.File, error) {
 
 	gzipWriter := gzip.NewWriter(gzipFile)
 	_, err = io.Copy(gzipWriter, file)
-	gzipWriter.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	err = gzipWriter.Close()
 	if err != nil {
 		return nil, err
 	}
