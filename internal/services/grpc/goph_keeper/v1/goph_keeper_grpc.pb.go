@@ -19,11 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	GophKeeperV1Service_RegisterUser_FullMethodName       = "/grpc.goph_keeper.v1.GophKeeperV1Service/RegisterUser"
-	GophKeeperV1Service_AuthenticateUser_FullMethodName   = "/grpc.goph_keeper.v1.GophKeeperV1Service/AuthenticateUser"
-	GophKeeperV1Service_StorePrivateData_FullMethodName   = "/grpc.goph_keeper.v1.GophKeeperV1Service/StorePrivateData"
-	GophKeeperV1Service_SyncData_FullMethodName           = "/grpc.goph_keeper.v1.GophKeeperV1Service/SyncData"
-	GophKeeperV1Service_RequestPrivateData_FullMethodName = "/grpc.goph_keeper.v1.GophKeeperV1Service/RequestPrivateData"
+	GophKeeperV1Service_RegisterUser_FullMethodName     = "/grpc.goph_keeper.v1.GophKeeperV1Service/RegisterUser"
+	GophKeeperV1Service_AuthenticateUser_FullMethodName = "/grpc.goph_keeper.v1.GophKeeperV1Service/AuthenticateUser"
+	GophKeeperV1Service_Verify2FA_FullMethodName        = "/grpc.goph_keeper.v1.GophKeeperV1Service/Verify2FA"
+	GophKeeperV1Service_UploadFile_FullMethodName       = "/grpc.goph_keeper.v1.GophKeeperV1Service/UploadFile"
+	GophKeeperV1Service_SetMetadataFile_FullMethodName  = "/grpc.goph_keeper.v1.GophKeeperV1Service/SetMetadataFile"
+	GophKeeperV1Service_GetStoreDataList_FullMethodName = "/grpc.goph_keeper.v1.GophKeeperV1Service/GetStoreDataList"
+	GophKeeperV1Service_DownloadFile_FullMethodName     = "/grpc.goph_keeper.v1.GophKeeperV1Service/DownloadFile"
+	GophKeeperV1Service_GetMetadataFile_FullMethodName  = "/grpc.goph_keeper.v1.GophKeeperV1Service/GetMetadataFile"
+	GophKeeperV1Service_DeleteFile_FullMethodName       = "/grpc.goph_keeper.v1.GophKeeperV1Service/DeleteFile"
 )
 
 // GophKeeperV1ServiceClient is the client API for GophKeeperV1Service service.
@@ -34,12 +38,20 @@ type GophKeeperV1ServiceClient interface {
 	RegisterUser(ctx context.Context, in *RegisterUserRequest, opts ...grpc.CallOption) (*RegisterUserResponse, error)
 	// User authentication
 	AuthenticateUser(ctx context.Context, in *AuthenticateUserRequest, opts ...grpc.CallOption) (*AuthenticateUserResponse, error)
-	// Storing private data (streaming)
-	StorePrivateData(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[StorePrivateDataRequest, StorePrivateDataResponse], error)
-	// Synchronizing data (streaming)
-	SyncData(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SyncDataRequest, SyncDataResponse], error)
+	// Verifying 2FA
+	Verify2FA(ctx context.Context, in *Verify2FARequest, opts ...grpc.CallOption) (*Verify2FAResponse, error)
+	// streaming file
+	UploadFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadFileRequest, UploadFileResponse], error)
+	// Set metadata file
+	SetMetadataFile(ctx context.Context, in *SetMetadataFileRequest, opts ...grpc.CallOption) (*SetMetadataFileResponse, error)
+	// Listing files in server
+	GetStoreDataList(ctx context.Context, in *GetStoreDataListRequest, opts ...grpc.CallOption) (*GetStoreDataListResponse, error)
 	// Requesting private data (streaming)
-	RequestPrivateData(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[RequestPrivateDataRequest, RequestPrivateDataResponse], error)
+	DownloadFile(ctx context.Context, in *DownloadFileRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadFileResponse], error)
+	// Get metadata file
+	GetMetadataFile(ctx context.Context, in *GetMetadataFileRequest, opts ...grpc.CallOption) (*GetMetadataFileResponse, error)
+	// Delete file
+	DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error)
 }
 
 type gophKeeperV1ServiceClient struct {
@@ -70,44 +82,87 @@ func (c *gophKeeperV1ServiceClient) AuthenticateUser(ctx context.Context, in *Au
 	return out, nil
 }
 
-func (c *gophKeeperV1ServiceClient) StorePrivateData(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[StorePrivateDataRequest, StorePrivateDataResponse], error) {
+func (c *gophKeeperV1ServiceClient) Verify2FA(ctx context.Context, in *Verify2FARequest, opts ...grpc.CallOption) (*Verify2FAResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &GophKeeperV1Service_ServiceDesc.Streams[0], GophKeeperV1Service_StorePrivateData_FullMethodName, cOpts...)
+	out := new(Verify2FAResponse)
+	err := c.cc.Invoke(ctx, GophKeeperV1Service_Verify2FA_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[StorePrivateDataRequest, StorePrivateDataResponse]{ClientStream: stream}
+	return out, nil
+}
+
+func (c *gophKeeperV1ServiceClient) UploadFile(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[UploadFileRequest, UploadFileResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &GophKeeperV1Service_ServiceDesc.Streams[0], GophKeeperV1Service_UploadFile_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[UploadFileRequest, UploadFileResponse]{ClientStream: stream}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type GophKeeperV1Service_StorePrivateDataClient = grpc.ClientStreamingClient[StorePrivateDataRequest, StorePrivateDataResponse]
+type GophKeeperV1Service_UploadFileClient = grpc.ClientStreamingClient[UploadFileRequest, UploadFileResponse]
 
-func (c *gophKeeperV1ServiceClient) SyncData(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SyncDataRequest, SyncDataResponse], error) {
+func (c *gophKeeperV1ServiceClient) SetMetadataFile(ctx context.Context, in *SetMetadataFileRequest, opts ...grpc.CallOption) (*SetMetadataFileResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &GophKeeperV1Service_ServiceDesc.Streams[1], GophKeeperV1Service_SyncData_FullMethodName, cOpts...)
+	out := new(SetMetadataFileResponse)
+	err := c.cc.Invoke(ctx, GophKeeperV1Service_SetMetadataFile_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[SyncDataRequest, SyncDataResponse]{ClientStream: stream}
+	return out, nil
+}
+
+func (c *gophKeeperV1ServiceClient) GetStoreDataList(ctx context.Context, in *GetStoreDataListRequest, opts ...grpc.CallOption) (*GetStoreDataListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetStoreDataListResponse)
+	err := c.cc.Invoke(ctx, GophKeeperV1Service_GetStoreDataList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *gophKeeperV1ServiceClient) DownloadFile(ctx context.Context, in *DownloadFileRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadFileResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &GophKeeperV1Service_ServiceDesc.Streams[1], GophKeeperV1Service_DownloadFile_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[DownloadFileRequest, DownloadFileResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type GophKeeperV1Service_SyncDataClient = grpc.ClientStreamingClient[SyncDataRequest, SyncDataResponse]
+type GophKeeperV1Service_DownloadFileClient = grpc.ServerStreamingClient[DownloadFileResponse]
 
-func (c *gophKeeperV1ServiceClient) RequestPrivateData(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[RequestPrivateDataRequest, RequestPrivateDataResponse], error) {
+func (c *gophKeeperV1ServiceClient) GetMetadataFile(ctx context.Context, in *GetMetadataFileRequest, opts ...grpc.CallOption) (*GetMetadataFileResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &GophKeeperV1Service_ServiceDesc.Streams[2], GophKeeperV1Service_RequestPrivateData_FullMethodName, cOpts...)
+	out := new(GetMetadataFileResponse)
+	err := c.cc.Invoke(ctx, GophKeeperV1Service_GetMetadataFile_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[RequestPrivateDataRequest, RequestPrivateDataResponse]{ClientStream: stream}
-	return x, nil
+	return out, nil
 }
 
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type GophKeeperV1Service_RequestPrivateDataClient = grpc.BidiStreamingClient[RequestPrivateDataRequest, RequestPrivateDataResponse]
+func (c *gophKeeperV1ServiceClient) DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteFileResponse)
+	err := c.cc.Invoke(ctx, GophKeeperV1Service_DeleteFile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
 
 // GophKeeperV1ServiceServer is the server API for GophKeeperV1Service service.
 // All implementations must embed UnimplementedGophKeeperV1ServiceServer
@@ -117,12 +172,20 @@ type GophKeeperV1ServiceServer interface {
 	RegisterUser(context.Context, *RegisterUserRequest) (*RegisterUserResponse, error)
 	// User authentication
 	AuthenticateUser(context.Context, *AuthenticateUserRequest) (*AuthenticateUserResponse, error)
-	// Storing private data (streaming)
-	StorePrivateData(grpc.ClientStreamingServer[StorePrivateDataRequest, StorePrivateDataResponse]) error
-	// Synchronizing data (streaming)
-	SyncData(grpc.ClientStreamingServer[SyncDataRequest, SyncDataResponse]) error
+	// Verifying 2FA
+	Verify2FA(context.Context, *Verify2FARequest) (*Verify2FAResponse, error)
+	// streaming file
+	UploadFile(grpc.ClientStreamingServer[UploadFileRequest, UploadFileResponse]) error
+	// Set metadata file
+	SetMetadataFile(context.Context, *SetMetadataFileRequest) (*SetMetadataFileResponse, error)
+	// Listing files in server
+	GetStoreDataList(context.Context, *GetStoreDataListRequest) (*GetStoreDataListResponse, error)
 	// Requesting private data (streaming)
-	RequestPrivateData(grpc.BidiStreamingServer[RequestPrivateDataRequest, RequestPrivateDataResponse]) error
+	DownloadFile(*DownloadFileRequest, grpc.ServerStreamingServer[DownloadFileResponse]) error
+	// Get metadata file
+	GetMetadataFile(context.Context, *GetMetadataFileRequest) (*GetMetadataFileResponse, error)
+	// Delete file
+	DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error)
 	mustEmbedUnimplementedGophKeeperV1ServiceServer()
 }
 
@@ -139,14 +202,26 @@ func (UnimplementedGophKeeperV1ServiceServer) RegisterUser(context.Context, *Reg
 func (UnimplementedGophKeeperV1ServiceServer) AuthenticateUser(context.Context, *AuthenticateUserRequest) (*AuthenticateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateUser not implemented")
 }
-func (UnimplementedGophKeeperV1ServiceServer) StorePrivateData(grpc.ClientStreamingServer[StorePrivateDataRequest, StorePrivateDataResponse]) error {
-	return status.Errorf(codes.Unimplemented, "method StorePrivateData not implemented")
+func (UnimplementedGophKeeperV1ServiceServer) Verify2FA(context.Context, *Verify2FARequest) (*Verify2FAResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Verify2FA not implemented")
 }
-func (UnimplementedGophKeeperV1ServiceServer) SyncData(grpc.ClientStreamingServer[SyncDataRequest, SyncDataResponse]) error {
-	return status.Errorf(codes.Unimplemented, "method SyncData not implemented")
+func (UnimplementedGophKeeperV1ServiceServer) UploadFile(grpc.ClientStreamingServer[UploadFileRequest, UploadFileResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method UploadFile not implemented")
 }
-func (UnimplementedGophKeeperV1ServiceServer) RequestPrivateData(grpc.BidiStreamingServer[RequestPrivateDataRequest, RequestPrivateDataResponse]) error {
-	return status.Errorf(codes.Unimplemented, "method RequestPrivateData not implemented")
+func (UnimplementedGophKeeperV1ServiceServer) SetMetadataFile(context.Context, *SetMetadataFileRequest) (*SetMetadataFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetMetadataFile not implemented")
+}
+func (UnimplementedGophKeeperV1ServiceServer) GetStoreDataList(context.Context, *GetStoreDataListRequest) (*GetStoreDataListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStoreDataList not implemented")
+}
+func (UnimplementedGophKeeperV1ServiceServer) DownloadFile(*DownloadFileRequest, grpc.ServerStreamingServer[DownloadFileResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method DownloadFile not implemented")
+}
+func (UnimplementedGophKeeperV1ServiceServer) GetMetadataFile(context.Context, *GetMetadataFileRequest) (*GetMetadataFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMetadataFile not implemented")
+}
+func (UnimplementedGophKeeperV1ServiceServer) DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteFile not implemented")
 }
 func (UnimplementedGophKeeperV1ServiceServer) mustEmbedUnimplementedGophKeeperV1ServiceServer() {}
 func (UnimplementedGophKeeperV1ServiceServer) testEmbeddedByValue()                             {}
@@ -205,26 +280,113 @@ func _GophKeeperV1Service_AuthenticateUser_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
-func _GophKeeperV1Service_StorePrivateData_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(GophKeeperV1ServiceServer).StorePrivateData(&grpc.GenericServerStream[StorePrivateDataRequest, StorePrivateDataResponse]{ServerStream: stream})
+func _GophKeeperV1Service_Verify2FA_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Verify2FARequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GophKeeperV1ServiceServer).Verify2FA(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GophKeeperV1Service_Verify2FA_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GophKeeperV1ServiceServer).Verify2FA(ctx, req.(*Verify2FARequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GophKeeperV1Service_UploadFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(GophKeeperV1ServiceServer).UploadFile(&grpc.GenericServerStream[UploadFileRequest, UploadFileResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type GophKeeperV1Service_StorePrivateDataServer = grpc.ClientStreamingServer[StorePrivateDataRequest, StorePrivateDataResponse]
+type GophKeeperV1Service_UploadFileServer = grpc.ClientStreamingServer[UploadFileRequest, UploadFileResponse]
 
-func _GophKeeperV1Service_SyncData_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(GophKeeperV1ServiceServer).SyncData(&grpc.GenericServerStream[SyncDataRequest, SyncDataResponse]{ServerStream: stream})
+func _GophKeeperV1Service_SetMetadataFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetMetadataFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GophKeeperV1ServiceServer).SetMetadataFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GophKeeperV1Service_SetMetadataFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GophKeeperV1ServiceServer).SetMetadataFile(ctx, req.(*SetMetadataFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GophKeeperV1Service_GetStoreDataList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetStoreDataListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GophKeeperV1ServiceServer).GetStoreDataList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GophKeeperV1Service_GetStoreDataList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GophKeeperV1ServiceServer).GetStoreDataList(ctx, req.(*GetStoreDataListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GophKeeperV1Service_DownloadFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(DownloadFileRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(GophKeeperV1ServiceServer).DownloadFile(m, &grpc.GenericServerStream[DownloadFileRequest, DownloadFileResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type GophKeeperV1Service_SyncDataServer = grpc.ClientStreamingServer[SyncDataRequest, SyncDataResponse]
+type GophKeeperV1Service_DownloadFileServer = grpc.ServerStreamingServer[DownloadFileResponse]
 
-func _GophKeeperV1Service_RequestPrivateData_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(GophKeeperV1ServiceServer).RequestPrivateData(&grpc.GenericServerStream[RequestPrivateDataRequest, RequestPrivateDataResponse]{ServerStream: stream})
+func _GophKeeperV1Service_GetMetadataFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMetadataFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GophKeeperV1ServiceServer).GetMetadataFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GophKeeperV1Service_GetMetadataFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GophKeeperV1ServiceServer).GetMetadataFile(ctx, req.(*GetMetadataFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type GophKeeperV1Service_RequestPrivateDataServer = grpc.BidiStreamingServer[RequestPrivateDataRequest, RequestPrivateDataResponse]
+func _GophKeeperV1Service_DeleteFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteFileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GophKeeperV1ServiceServer).DeleteFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GophKeeperV1Service_DeleteFile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GophKeeperV1ServiceServer).DeleteFile(ctx, req.(*DeleteFileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
 
 // GophKeeperV1Service_ServiceDesc is the grpc.ServiceDesc for GophKeeperV1Service service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -241,23 +403,37 @@ var GophKeeperV1Service_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "AuthenticateUser",
 			Handler:    _GophKeeperV1Service_AuthenticateUser_Handler,
 		},
+		{
+			MethodName: "Verify2FA",
+			Handler:    _GophKeeperV1Service_Verify2FA_Handler,
+		},
+		{
+			MethodName: "SetMetadataFile",
+			Handler:    _GophKeeperV1Service_SetMetadataFile_Handler,
+		},
+		{
+			MethodName: "GetStoreDataList",
+			Handler:    _GophKeeperV1Service_GetStoreDataList_Handler,
+		},
+		{
+			MethodName: "GetMetadataFile",
+			Handler:    _GophKeeperV1Service_GetMetadataFile_Handler,
+		},
+		{
+			MethodName: "DeleteFile",
+			Handler:    _GophKeeperV1Service_DeleteFile_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "StorePrivateData",
-			Handler:       _GophKeeperV1Service_StorePrivateData_Handler,
+			StreamName:    "UploadFile",
+			Handler:       _GophKeeperV1Service_UploadFile_Handler,
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "SyncData",
-			Handler:       _GophKeeperV1Service_SyncData_Handler,
-			ClientStreams: true,
-		},
-		{
-			StreamName:    "RequestPrivateData",
-			Handler:       _GophKeeperV1Service_RequestPrivateData_Handler,
+			StreamName:    "DownloadFile",
+			Handler:       _GophKeeperV1Service_DownloadFile_Handler,
 			ServerStreams: true,
-			ClientStreams: true,
 		},
 	},
 	Metadata: "grpc/goph_keeper/v1/goph_keeper.proto",
