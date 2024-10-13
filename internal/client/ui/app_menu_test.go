@@ -21,20 +21,21 @@ func TestShowAppMenu(t *testing.T) {
 	// Check that the app is not nil
 	assert.NotNil(t, menu.app)
 
-	list := tview.NewList().
-		AddItem("1. Файлы", "", '1', func() {
-			menu.showFilesMenu()
-		}).
-		AddItem("2. Пароли", "", '2', func() {
-			menu.showPasswordMenu()
-		}).
-		AddItem("3. Карты", "", '2', func() {
-			menu.showCardsMenu()
-		}).
-		SetSelectedFocusOnly(true)
-	// Check that the focus is set to the specific list created in showAppMenu
+	// Check that the focus is set to the list
 	focused := menu.app.GetFocus()
-	assert.Equal(t, list, focused, "expected focus to be on the menu.list")
+	list, ok := focused.(*tview.List)
+	testTitleList := [3]string{
+		"1. Файлы",
+		"2. Пароли",
+		"3. Карты",
+	}
+
+	for item := 0; item < list.GetItemCount(); item++ {
+		mainText, _ := list.GetItemText(item)
+		assert.Equal(t, mainText, testTitleList[item], focused)
+	}
+
+	assert.True(t, ok, "expected focus to be on a tview.List, but got %T", focused)
 
 	// Check that the input capture is set
 	assert.NotNil(t, menu.app.GetInputCapture())
