@@ -47,10 +47,8 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
-	select {
-	case <-quit:
-		logger.Info("Received signal, exiting...")
-		serv.Stop()
-		os.Exit(0)
-	}
+	<-quit
+	logger.Info("Received signal, exiting...")
+	serv.Stop()
+	os.Exit(0)
 }

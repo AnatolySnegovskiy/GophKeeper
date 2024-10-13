@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func testShowFilesMenu(t *testing.T) {
+func TestShowFilesMenu(t *testing.T) {
 	menu := &Menu{
 		app:   tview.NewApplication(),
 		title: "Test Title",
