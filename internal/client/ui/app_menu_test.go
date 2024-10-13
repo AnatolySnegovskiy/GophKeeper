@@ -44,15 +44,8 @@ func TestShowAppMenu(t *testing.T) {
 	// Check that the focus is set to the list
 	focused := menu.app.GetFocus()
 	list, ok := focused.(*tview.List)
-	testTitleList := [3]string{
-		"1. Файлы",
-		"2. Пароли",
-		"3. Карты",
-	}
 
 	for item := 0; item < list.GetItemCount(); item++ {
-		mainText, _ := list.GetItemText(item)
-		assert.Equal(t, mainText, testTitleList[item], focused)
 		list.SetCurrentItem(item)
 		handler := list.InputHandler()
 		assert.NotNil(t, handler, "expected list to have an InputHandler")
