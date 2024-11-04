@@ -30,6 +30,18 @@ func setupTestFiles(login string) (cleanup func(), err error) {
 	return cleanup, nil
 }
 
+func setupUnreadableFile(filePath string) (cleanup func(), err error) {
+	if err := os.WriteFile(filePath, []byte("content"), 0000); err != nil {
+		return nil, err
+	}
+
+	cleanup = func() {
+		os.Remove(filePath)
+	}
+
+	return cleanup, nil
+}
+
 func TestGetPublicKey(t *testing.T) {
 	login := "testuser"
 	cleanup, err := setupTestFiles(login)
@@ -48,6 +60,19 @@ func TestGetPublicKey(t *testing.T) {
 		_, err := GetPublicKey("nonexistent")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to open private key file")
+	})
+
+	t.Run("read error", func(t *testing.T) {
+		unreadableFilePath := "./.ssh/" + login + "/unreadable_public_key.pem"
+		cleanupUnreadable, err := setupUnreadableFile(unreadableFilePath)
+		if err != nil {
+			t.Fatalf("setupUnreadableFile failed: %v", err)
+		}
+		defer cleanupUnreadable()
+
+		_, err = GetPublicKey(login + "/unreadable_public_key")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to open private key")
 	})
 }
 
@@ -69,5 +94,18 @@ func TestGetPrivateKey(t *testing.T) {
 		_, err := GetPrivateKey("nonexistent")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to open private key file")
+	})
+
+	t.Run("read error", func(t *testing.T) {
+		unreadableFilePath := "./.ssh/" + login + "/unreadable_private_key.pem"
+		cleanupUnreadable, err := setupUnreadableFile(unreadableFilePath)
+		if err != nil {
+			t.Fatalf("setupUnreadableFile failed: %v", err)
+		}
+		defer cleanupUnreadable()
+
+		_, err = GetPrivateKey(login + "/unreadable_private_key")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to open private key")
 	})
 }
