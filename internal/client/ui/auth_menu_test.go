@@ -34,13 +34,6 @@ func TestShowRegistrationForm(t *testing.T) {
 
 	focused := menu.app.GetFocus()
 
-	// Функция для симуляции нажатия клавиши
-	simulateKeyPress := func(key tcell.Key, primitive tview.Primitive) {
-		handler := primitive.InputHandler()
-		event := tcell.NewEventKey(key, 0, 0)
-		handler(event, func(p tview.Primitive) {})
-	}
-
 	// Симулируем ввод данных в поля формы
 	inputUsername := "testuser"
 	inputPassword := "testpass"

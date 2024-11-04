@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"github.com/gdamore/tcell/v2"
 	"github.com/golang/mock/gomock"
+	"github.com/rivo/tview"
 	"goph_keeper/internal/mocks"
 	"goph_keeper/internal/services"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
@@ -32,4 +34,10 @@ func getMockGRPCClient(t *testing.T, login string) *mocks.MockGophKeeperV1Servic
 
 func clear() {
 	os.RemoveAll("./.ssh/")
+}
+
+func simulateKeyPress(key tcell.Key, primitive tview.Primitive) {
+	handler := primitive.InputHandler()
+	event := tcell.NewEventKey(key, 0, 0)
+	handler(event, func(p tview.Primitive) {})
 }
