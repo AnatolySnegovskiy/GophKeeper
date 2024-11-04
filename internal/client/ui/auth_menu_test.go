@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"errors"
 	"github.com/gdamore/tcell/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/rivo/tview"
@@ -75,7 +76,30 @@ func TestShowRegistrationForm(t *testing.T) {
 
 	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected ShowMainMenu to be called")
-	os.RemoveAll("./.ssh/")
+
+	mockClient.EXPECT().RegisterUser(gomock.Any(), gomock.Any()).Return(&v1.RegisterUserResponse{
+		Success: false,
+	}, errors.New("test error")).AnyTimes()
+	grpcClient = client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient, login, login)
+
+	menu = &Menu{
+		app:        tview.NewApplication(),
+		title:      "Test Title",
+		grpcClient: grpcClient,
+	}
+
+	menu.showRegistrationForm()
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyTab, focused) // Перейти к следующему полю
+	simulateKeyPress(tcell.KeyTab, focused) // Перейти к кнопке Register
+	focused = menu.app.GetFocus()
+	assert.IsType(t, &tview.Button{}, focused, "expected focused to be a tview.Form, but got %T", focused)
+	assert.Equal(t, "Register", focused.(*tview.Button).GetLabel(), "expected focused to be a tview.Form, but got %T", focused)
+	// Симулируем нажатие кнопки Register
+	simulateKeyPress(tcell.KeyEnter, focused)
+	assert.True(t, true, "expected showAuthorizationForm to be called")
+
+	clear()
 }
 
 func TestShowAuthorizationForm(t *testing.T) {
