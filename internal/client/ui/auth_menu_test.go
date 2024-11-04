@@ -76,21 +76,52 @@ func TestShowRegistrationForm(t *testing.T) {
 
 	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected ShowMainMenu to be called")
+	clear()
+}
 
+func TestShowRegistrationFormFail(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockClient := mocks.NewMockGophKeeperV1ServiceClient(ctrl)
 	mockClient.EXPECT().RegisterUser(gomock.Any(), gomock.Any()).Return(&v1.RegisterUserResponse{
 		Success: false,
-	}, errors.New("test error")).AnyTimes()
-	grpcClient = client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient, login, login)
+	}, errors.New("error")).AnyTimes()
 
-	menu = &Menu{
+	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient, "TEST", "TEST")
+	menu := &Menu{
 		app:        tview.NewApplication(),
 		title:      "Test Title",
 		grpcClient: grpcClient,
+		logger:     slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	}
 
 	menu.showRegistrationForm()
+
+	focused := menu.app.GetFocus()
+
+	// Функция для симуляции нажатия клавиши
+	simulateKeyPress := func(key tcell.Key, primitive tview.Primitive) {
+		handler := primitive.InputHandler()
+		event := tcell.NewEventKey(key, 0, 0)
+		handler(event, func(p tview.Primitive) {})
+	}
+
+	// Симулируем ввод данных в поля формы
+	inputUsername := "testuser"
+	inputPassword := "testpass"
+	inputFormHandler := focused.InputHandler()
+	// Симулируем ввод имени пользователя
+	for _, r := range inputUsername {
+		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
+	}
 	focused = menu.app.GetFocus()
 	simulateKeyPress(tcell.KeyTab, focused) // Перейти к следующему полю
+	inputFormHandler = focused.InputHandler()
+	// Симулируем ввод пароля
+	for _, r := range inputPassword {
+		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
+	}
+
 	simulateKeyPress(tcell.KeyTab, focused) // Перейти к кнопке Register
 	focused = menu.app.GetFocus()
 	assert.IsType(t, &tview.Button{}, focused, "expected focused to be a tview.Form, but got %T", focused)
@@ -98,7 +129,6 @@ func TestShowRegistrationForm(t *testing.T) {
 	// Симулируем нажатие кнопки Register
 	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected showAuthorizationForm to be called")
-
 	clear()
 }
 
