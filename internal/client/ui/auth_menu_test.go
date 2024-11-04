@@ -132,6 +132,12 @@ func TestShowRegistrationFormFail(t *testing.T) {
 	// Симулируем нажатие кнопки Register
 	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected showAuthorizationForm to be called")
+
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	assert.Equal(t, "Username", focused.(*tview.InputField).GetLabel(), "expected focused to be a tview.Form, but got %T", focused)
+
 	clear()
 }
 
