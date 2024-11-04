@@ -51,6 +51,7 @@ func TestShowRegistrationForm(t *testing.T) {
 	}
 	focused = menu.app.GetFocus()
 	simulateKeyPress(tcell.KeyTab, focused) // Перейти к следующему полю
+	focused = menu.app.GetFocus()
 	inputFormHandler = focused.InputHandler()
 	// Симулируем ввод пароля
 	for _, r := range inputPassword {
@@ -116,7 +117,9 @@ func TestShowRegistrationFormFail(t *testing.T) {
 	}
 	focused = menu.app.GetFocus()
 	simulateKeyPress(tcell.KeyTab, focused) // Перейти к следующему полю
+	focused = menu.app.GetFocus()
 	inputFormHandler = focused.InputHandler()
+
 	// Симулируем ввод пароля
 	for _, r := range inputPassword {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
