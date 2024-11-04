@@ -1,2 +1,3 @@
 ignore:
   - "./internal/services/grpc/.*"
+  - "./internal/mocks/.*"
