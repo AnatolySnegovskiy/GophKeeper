@@ -117,6 +117,9 @@ func TestShowCardForm(t *testing.T) {
 			{UserPath: "path/to/card2", Uuid: "uuid2"},
 		},
 	}, nil).AnyTimes()
+	mockClient.EXPECT().SetMetadataFile(gomock.Any(), gomock.Any()).Return(&v1.SetMetadataFileResponse{
+		Success: true,
+	}, nil).AnyTimes()
 	// Ожидания для UploadFile
 	mockStream := &MockUploadFileClient{
 		sendFunc: func(req *v1.UploadFileRequest) error {
@@ -213,7 +216,7 @@ func TestShowCardForm(t *testing.T) {
 	// Test the "Submit" button logic
 	menu.showCardForm(fileCard)
 	focused = menu.app.GetFocus()
-	for i := 0; i < 7; i++ {
+	for i := 0; i < 6; i++ {
 		simulateKeyPress(tcell.KeyTab, focused)
 	}
 	focused = menu.app.GetFocus()
@@ -223,7 +226,7 @@ func TestShowCardForm(t *testing.T) {
 	// Test the "Cancel" button logic
 	menu.showCardForm(fileCard)
 	focused = menu.app.GetFocus()
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 7; i++ {
 		simulateKeyPress(tcell.KeyTab, focused)
 	}
 	focused = menu.app.GetFocus()
