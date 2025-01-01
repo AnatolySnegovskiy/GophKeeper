@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"goph_keeper/internal/client"
+	"goph_keeper/internal/mocks"
 	"goph_keeper/internal/services/entities"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"log/slog"
@@ -110,7 +111,8 @@ func (m *MockUploadFileClient) CloseSend() error {
 func TestShowCardForm(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockClient := getMockGRPCClient(t, "TEST")
+	mockClient := mocks.NewMockGophKeeperV1ServiceClient(ctrl)
+
 	// Ожидания для UploadFile
 	mockStream := &MockUploadFileClient{
 		sendFunc: func(req *v1.UploadFileRequest) error {
@@ -124,6 +126,7 @@ func TestShowCardForm(t *testing.T) {
 		},
 	}
 	mockClient.EXPECT().UploadFile(gomock.Any()).Return(mockStream, nil).AnyTimes()
+
 	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient, "TEST", "TEST")
 	menu := &Menu{
 		app:        tview.NewApplication(),
@@ -142,44 +145,66 @@ func TestShowCardForm(t *testing.T) {
 	}
 
 	menu.showCardForm(fileCard)
-	focused := menu.app.GetFocus()
 
-	// Simulate filling out the form
-	inputFormHandler := focused.InputHandler()
-	inputCardName := "New Card Name"
+	focused := menu.app.GetFocus()
+	inputFormHandler := focused.(*tview.InputField).InputHandler()
+	inputCardName := "2"
 	for _, r := range inputCardName {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
+
 	simulateKeyPress(tcell.KeyTab, focused)
-	inputDescription := "New Description"
+	focused = menu.app.GetFocus()
+	inputFormHandler = focused.InputHandler()
+	inputDescription := "2"
 	for _, r := range inputDescription {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
+
 	simulateKeyPress(tcell.KeyTab, focused)
-	inputCardNumber := "6543210987654321"
+	focused = menu.app.GetFocus()
+	inputFormHandler = focused.InputHandler()
+	inputCardNumber := "2"
 	for _, r := range inputCardNumber {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
+
 	simulateKeyPress(tcell.KeyTab, focused)
-	inputExpiryDate := "12/26"
+	focused = menu.app.GetFocus()
+	inputFormHandler = focused.InputHandler()
+	inputExpiryDate := "2"
 	for _, r := range inputExpiryDate {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
+
 	simulateKeyPress(tcell.KeyTab, focused)
-	inputCVV := "456"
+	focused = menu.app.GetFocus()
+	inputFormHandler = focused.InputHandler()
+	inputCVV := "2"
 	for _, r := range inputCVV {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
+
 	simulateKeyPress(tcell.KeyTab, focused)
-	inputCardHolder := "New Holder"
+	focused = menu.app.GetFocus()
+	inputFormHandler = focused.InputHandler()
+	inputCardHolder := "2"
 	for _, r := range inputCardHolder {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
-	simulateKeyPress(tcell.KeyTab, focused)
 
+	simulateKeyPress(tcell.KeyTab, focused)
 	// Simulate submitting the form
 	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected showCardsMenu to be called")
+
+	// Verify that the fileCard fields were updated correctly
+	assert.Equal(t, "Test Card2", fileCard.CardName, "expected CardName to be updated")
+	assert.Equal(t, "Test Description2", fileCard.Description, "expected Description to be updated")
+	assert.Equal(t, "12345678901234562", fileCard.CardNumber, "expected CardNumber to be updated")
+	assert.Equal(t, "12/252", fileCard.ExpiryDate, "expected ExpiryDate to be updated")
+	assert.Equal(t, "1232", fileCard.CVV, "expected CVV to be updated")
+	assert.Equal(t, "Test Holder2", fileCard.CardHolder, "expected CardHolder to be updated")
 
 	// Simulate canceling the form
 	menu.showCardForm(fileCard)
