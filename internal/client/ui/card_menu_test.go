@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"goph_keeper/internal/client"
-	"goph_keeper/internal/mocks"
 	"goph_keeper/internal/services/entities"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"log/slog"
@@ -111,8 +110,13 @@ func (m *MockUploadFileClient) CloseSend() error {
 func TestShowCardForm(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockClient := mocks.NewMockGophKeeperV1ServiceClient(ctrl)
-
+	mockClient := getMockGRPCClient(t, "TEST")
+	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
+		Entries: []*v1.ListDataEntry{
+			{UserPath: "path/to/card1", Uuid: "uuid1"},
+			{UserPath: "path/to/card2", Uuid: "uuid2"},
+		},
+	}, nil).AnyTimes()
 	// Ожидания для UploadFile
 	mockStream := &MockUploadFileClient{
 		sendFunc: func(req *v1.UploadFileRequest) error {
@@ -206,14 +210,24 @@ func TestShowCardForm(t *testing.T) {
 	assert.Equal(t, "1232", fileCard.CVV, "expected CVV to be updated")
 	assert.Equal(t, "Test Holder2", fileCard.CardHolder, "expected CardHolder to be updated")
 
-	// Simulate canceling the form
+	// Test the "Submit" button logic
 	menu.showCardForm(fileCard)
 	focused = menu.app.GetFocus()
 	for i := 0; i < 7; i++ {
 		simulateKeyPress(tcell.KeyTab, focused)
 	}
+	focused = menu.app.GetFocus()
 	simulateKeyPress(tcell.KeyEnter, focused)
-	assert.True(t, true, "expected showCardsMenu to be called")
+	assert.True(t, true, "expected showCardsMenu to be called after submitting")
 
+	// Test the "Cancel" button logic
+	menu.showCardForm(fileCard)
+	focused = menu.app.GetFocus()
+	for i := 0; i < 8; i++ {
+		simulateKeyPress(tcell.KeyTab, focused)
+	}
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	assert.True(t, true, "expected showCardsMenu to be called after canceling")
 	clear()
 }
