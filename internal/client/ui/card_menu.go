@@ -113,5 +113,5 @@ func (m *Menu) showCardForm(fileCard *entities.FileCard) {
 
 	form.SetBorder(true).SetTitle("Карты").SetTitleAlign(tview.AlignLeft)
 
-	m.app.SetRoot(form, true)
+	m.app.SetRoot(form, true).SetFocus(form)
 }
