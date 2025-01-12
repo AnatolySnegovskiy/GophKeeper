@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package grpc.goph_keeper.v1;
 
-import "buf/validate/validate.proto";
-
 option go_package = "GophKeeper/proto/grpc/server/v1";
 
 service GophKeeperV1Service {
@@ -13,25 +11,38 @@ service GophKeeperV1Service {
   // User authentication
   rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse);
 
-  // Storing private data (streaming)
-  rpc StorePrivateData(stream StorePrivateDataRequest) returns (StorePrivateDataResponse);
+  // Verifying 2FA
+  rpc Verify2FA(Verify2FARequest) returns (Verify2FAResponse);
 
-  // Synchronizing data (streaming)
-  rpc SyncData(stream SyncDataRequest) returns (SyncDataResponse);
+  // streaming file
+  rpc UploadFile(stream UploadFileRequest) returns (UploadFileResponse);
+
+  // Set metadata file
+  rpc SetMetadataFile(SetMetadataFileRequest) returns (SetMetadataFileResponse);
+
+  // Listing files in server
+  rpc GetStoreDataList(GetStoreDataListRequest) returns (GetStoreDataListResponse);
 
   // Requesting private data (streaming)
-  rpc RequestPrivateData(stream RequestPrivateDataRequest) returns (stream RequestPrivateDataResponse);
+  rpc DownloadFile(DownloadFileRequest) returns (stream DownloadFileResponse);
+
+  // Get metadata file
+  rpc GetMetadataFile(GetMetadataFileRequest) returns (GetMetadataFileResponse);
+
+  // Delete file
+  rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
 }
 
 // User Registration
 message RegisterUserRequest {
   string username = 1;
   string password = 2;
+  string ssh_pub_key = 3;
 }
 
+// User Registration Response
 message RegisterUserResponse {
   bool success = 1;
-  string message = 2;
 }
 
 // User Authentication
@@ -40,57 +51,103 @@ message AuthenticateUserRequest {
   string password = 2;
 }
 
+// User Authentication Response
 message AuthenticateUserResponse {
   bool success = 1;
+  string token = 2;
+}
+
+// Verifying 2FA (2FA) token from ssh cache
+message Verify2FARequest {
+  string token = 1;
+}
+
+// Verifying 2FA (2FA) response
+message Verify2FAResponse {
+  bool success = 1;
   string jwt_token = 2;
-  string message = 3;
 }
 
-// Storing Private Data (streaming)
-message StorePrivateDataRequest {
-  DataType data_type = 1;  // e.g., "login_password", "text", "binary", "card"
+message UploadFileRequest {
+  Status status = 1;
   bytes data = 2;
-  string metadata = 3;
 }
 
-message StorePrivateDataResponse {
+// Storing Private Data Response
+message UploadFileResponse {
   bool success = 1;
-  string message = 2;
+  string uuid = 2;
 }
 
-// Data Synchronization (streaming)
-message SyncDataRequest {
-  repeated DataEntry data_entries = 1;
-}
-
-message SyncDataResponse {
-  bool success = 1;
-  string message = 2;
-}
-
-message DataEntry {
-  DataType data_type = 1;  // e.g., "login_password", "text", "binary", "card"
-  bytes data = 2;
+// Storing Data
+message SetMetadataFileRequest {
+  string uuid = 1;
+  DataType data_type = 2;  // e.g., "login_password", "text", "binary", "card"
   string metadata = 3;
+  string user_path = 4;
+  int32 size_chunks = 5;
+}
+
+// Storing Private Data Response
+message SetMetadataFileResponse {
+  bool success = 1;
+}
+
+// Listing Private Data
+message GetStoreDataListRequest {
+    DataType data_type = 1;
+}
+
+// Requesting Private Data
+message GetStoreDataListResponse {
+  repeated ListDataEntry entries = 1;
+}
+
+// Requesting Private Data
+message ListDataEntry {
+  string uuid = 1;
+  string user_path = 2;
+}
+
+message GetMetadataFileRequest {
+  string uuid = 1;
+}
+
+message GetMetadataFileResponse {
+  string metadata = 1;
 }
 
 // Requesting Private Data (streaming)
-message RequestPrivateDataRequest {
-  DataType data_type = 2;  // e.g., "login_password", "text", "binary", "card"
+message DownloadFileRequest {
+  string uuid = 1;
 }
 
-message RequestPrivateDataResponse {
-  bool success = 1;
+// Requesting Private Data
+message DownloadFileResponse {
+  Status status = 1;
   bytes data = 2;
-  string metadata = 3;
-  string message = 4;
+}
+
+message DeleteFileRequest {
+  string uuid = 1;
+}
+
+message DeleteFileResponse {
+  bool success = 1;
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_SUCCESS = 1;
+  STATUS_FAIL = 2;
+  STATUS_PROCESSING = 3;
+  STATUS_CANCELLED = 4;
 }
 
 // Enum for Data Types
 enum DataType {
   DATA_TYPE_UNSPECIFIED = 0; // Default value, indicates unspecified data type
   DATA_TYPE_LOGIN_PASSWORD = 1;
-  DATA_TYPE_TEXT = 2;
   DATA_TYPE_BINARY = 3;
   DATA_TYPE_CARD = 4;
 }
