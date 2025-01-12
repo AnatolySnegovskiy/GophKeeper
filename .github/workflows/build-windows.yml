@@ -25,6 +25,9 @@ jobs:
           if (-Not (Test-Path -Path build/windows/configs)) {
             New-Item -ItemType Directory -Path build/windows/configs
           }
+          if (-Not (Test-Path -Path build/windows/logs)) {
+            New-Item -ItemType Directory -Path build/windows/logs
+          }
         shell: pwsh
 
       - name: Build server for Windows
@@ -36,15 +39,19 @@ jobs:
 
       - name: Create server config file
         run: |
-          echo "server:
+          $config = @"
+          server:
             host: localhost
             port: 8080
           redis:
             host: localhost
             port: 6379
-            password: \"my_redis_password\"
+            password: "my_redis_password"
           db:
-            dsn: \"postgres://postgres:root@localhost:5432\"" > build/windows/configs/config-server.yaml
+            dsn: "postgres://postgres:root@localhost:5432"
+          "@
+          $config | Out-File -FilePath build/windows/config-server.yaml -Encoding utf8
+        shell: pwsh
 
       - name: Build client for Windows
         run: |

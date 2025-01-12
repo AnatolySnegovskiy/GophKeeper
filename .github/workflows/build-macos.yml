@@ -21,6 +21,7 @@ jobs:
         run: |
           mkdir -p build/darwin
           mkdir -p build/darwin/configs
+          mkdir -p build/darwin/logs
           GOOS=darwin GOARCH=amd64 go build -o build/darwin/server ./cmd/server
 
       - name: Create server config file
