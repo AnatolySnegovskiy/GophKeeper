@@ -1,0 +1,130 @@
+name: Go Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Запускать при создании тега вида v1.0.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        go-version: ['1.20']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Build server for ${{ matrix.os }}
+        run: |
+          mkdir -p build/${{ matrix.os }}
+          GOOS=${{ matrix.os }} GOARCH=amd64 go build -o build/${{ matrix.os }}/server ./cmd/server
+
+      - name: Create server config file
+        run: |
+          echo "server:
+            host: localhost
+            port: 8080
+          redis:
+            host: localhost
+            port: 6379
+            password: \"my_redis_password\"
+          db:
+            dsn: \"postgres://postgres:root@localhost:5432\"" > build/${{ matrix.os }}/config-server.yaml
+
+      - name: Build client for ${{ matrix.os }}
+        run: |
+          mkdir -p build/${{ matrix.os }}
+          GOOS=${{ matrix.os }} GOARCH=amd64 go build -o build/${{ matrix.os }}/client ./cmd/client
+
+      - name: Create client config file
+        run: |
+          echo "server:
+            host: localhost
+            port: 8080" > build/${{ matrix.os }}/config-client.yaml
+
+      - name: Create ZIP archive for ${{ matrix.os }}
+        run: |
+          cd build
+          zip -r ../release/${{ matrix.os }}.zip ${{ matrix.os }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifacts-${{ matrix.os }}
+          path: release/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: build-artifacts-ubuntu-latest
+          path: release/
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: build-artifacts-windows-latest
+          path: release/
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: build-artifacts-macos-latest
+          path: release/
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Ubuntu Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/ubuntu-latest.zip
+          asset_name: ubuntu-latest.zip
+          asset_content_type: application/zip
+
+      - name: Upload Windows Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/windows-latest.zip
+          asset_name: windows-latest.zip
+          asset_content_type: application/zip
+
+      - name: Upload macOS Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/macos-latest.zip
+          asset_name: macos-latest.zip
+          asset_content_type: application/zip
