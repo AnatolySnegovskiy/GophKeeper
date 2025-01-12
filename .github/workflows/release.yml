@@ -7,11 +7,17 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - runner: ubuntu-latest
+            os: linux
+          - runner: windows-latest
+            os: windows
+          - runner: macos-latest
+            os: darwin
         go-version: ['1.21']
 
     steps:
@@ -73,19 +79,19 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
-          name: build-artifacts-ubuntu-latest
+          name: build-artifacts-linux
           path: release/
 
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
-          name: build-artifacts-windows-latest
+          name: build-artifacts-windows
           path: release/
 
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
-          name: build-artifacts-macos-latest
+          name: build-artifacts-darwin
           path: release/
 
       - name: Create Release
@@ -99,14 +105,14 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Ubuntu Release Asset
+      - name: Upload Linux Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/ubuntu-latest.zip
-          asset_name: ubuntu-latest.zip
+          asset_path: release/linux.zip
+          asset_name: linux.zip
           asset_content_type: application/zip
 
       - name: Upload Windows Release Asset
@@ -115,8 +121,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/windows-latest.zip
-          asset_name: windows-latest.zip
+          asset_path: release/windows.zip
+          asset_name: windows.zip
           asset_content_type: application/zip
 
       - name: Upload macOS Release Asset
@@ -125,6 +131,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/macos-latest.zip
-          asset_name: macos-latest.zip
+          asset_path: release/darwin.zip
+          asset_name: darwin.zip
           asset_content_type: application/zip
