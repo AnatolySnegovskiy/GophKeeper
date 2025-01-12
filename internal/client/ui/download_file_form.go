@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"github.com/rivo/tview"
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry, rollbackFilesMenu func()) {
@@ -32,7 +35,27 @@ func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry, rollbackFilesMenu f
 		progressChan := make(chan int)
 
 		go func() {
-			_, err := m.grpcClient.DownloadFile(context.Background(), entry.Uuid, directoryPath, progressChan)
+			suffixes := []string{"..", ".", "/..", "/.", "/../", "/./"}
+
+			for _, suffix := range suffixes {
+				if strings.HasSuffix(directoryPath, suffix) {
+					directoryPath = strings.TrimSuffix(directoryPath, suffix)
+				}
+			}
+
+			fileInfo, err := os.Stat(directoryPath)
+			if err != nil {
+				m.app.QueueUpdateDraw(func() {
+					info.SetText(fmt.Sprintf("[red]Error: %s", err))
+				})
+				return
+			}
+
+			if !fileInfo.IsDir() {
+				directoryPath = filepath.Dir(directoryPath)
+			}
+
+			_, err = m.grpcClient.DownloadFile(context.Background(), entry.Uuid, directoryPath, progressChan)
 			if err != nil {
 				m.app.QueueUpdateDraw(func() {
 					info.SetText(fmt.Sprintf("[red]Error: %s", err))
