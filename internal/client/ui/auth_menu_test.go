@@ -135,8 +135,13 @@ func TestShowRegistrationFormFail(t *testing.T) {
 }
 
 func TestShowAuthorizationForm(t *testing.T) {
+	mockClient := getMockGRPCClient(t, "TEST")
+	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient)
+
 	menu := &Menu{
-		app: tview.NewApplication(),
+		app:        tview.NewApplication(),
+		logger:     slog.New(slog.NewJSONHandler(os.Stdout, nil)),
+		grpcClient: grpcClient,
 	}
 
 	menu.showAuthorizationForm()
@@ -185,4 +190,5 @@ func TestShowAuthorizationForm(t *testing.T) {
 
 	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected ShowMainMenu to be called")
+	clear()
 }
