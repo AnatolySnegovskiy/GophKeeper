@@ -14,10 +14,6 @@ jobs:
         include:
           - runner: ubuntu-latest
             os: linux
-          - runner: windows-latest
-            os: windows
-          - runner: macos-latest
-            os: darwin
         go-version: ['1.21']
 
     steps:
