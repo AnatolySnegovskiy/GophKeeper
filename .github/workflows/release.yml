@@ -97,6 +97,10 @@ jobs:
           name: build-artifacts-darwin
           path: release/
 
+      - name: List release directory
+        run: ls -R release/
+        shell: bash
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
