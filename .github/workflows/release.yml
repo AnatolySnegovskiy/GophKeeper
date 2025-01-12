@@ -6,189 +6,25 @@ on:
       - 'v*.*.*'  # Запускать при создании тега вида v1.0.0
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.21'
-
-      - name: Install dependencies
-        run: go mod tidy
-
-      - name: Build server for Linux
-        run: |
-          mkdir -p build/linux
-          GOOS=linux GOARCH=amd64 go build -o build/linux/server ./cmd/server
-
-      - name: Create server config file
-        run: |
-          echo "server:
-            host: localhost
-            port: 8080
-          redis:
-            host: localhost
-            port: 6379
-            password: \"my_redis_password\"
-          db:
-            dsn: \"postgres://postgres:root@localhost:5432\"" > build/linux/config-server.yaml
-
-      - name: Build client for Linux
-        run: |
-          mkdir -p build/linux
-          GOOS=linux GOARCH=amd64 go build -o build/linux/client ./cmd/client
-
-      - name: Create client config file
-        run: |
-          echo "server:
-            host: localhost
-            port: 8080" > build/linux/config-client.yaml
-
-      - name: Create release directory
-        run: mkdir -p release
-
-      - name: Create ZIP archive for Linux
-        run: |
-          cd build
-          zip -r ../release/linux.zip linux
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts-linux
-          path: release/linux.zip
-
-      - name: Check build-linux success
-        if: failure()
-        run: echo "Build for Linux failed"
+  build:
+    uses: ./.github/workflows/build-linux.yml
+    with:
+    # Передайте необходимые параметры, если требуется
 
   build-windows:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.21'
-
-      - name: Install dependencies
-        run: go mod tidy
-
-      - name: Build server for Windows
-        run: |
-          mkdir -p build/windows
-          GOOS=windows GOARCH=amd64 go build -o build/windows/server.exe ./cmd/server
-
-      - name: Create server config file
-        run: |
-          echo "server:
-            host: localhost
-            port: 8080
-          redis:
-            host: localhost
-            port: 6379
-            password: \"my_redis_password\"
-          db:
-            dsn: \"postgres://postgres:root@localhost:5432\"" > build/windows/config-server.yaml
-
-      - name: Build client for Windows
-        run: |
-          mkdir -p build/windows
-          GOOS=windows GOARCH=amd64 go build -o build/windows/client.exe ./cmd/client
-
-      - name: Create client config file
-        run: |
-          echo "server:
-            host: localhost
-            port: 8080" > build/windows/config-client.yaml
-
-      - name: Create release directory
-        run: mkdir -p release
-
-      - name: Create ZIP archive for Windows
-        run: |
-          cd build
-          Compress-Archive -Path .\windows -DestinationPath ..\release\windows.zip
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts-windows
-          path: release/windows.zip
-
-      - name: Check build-windows success
-        if: failure()
-        run: echo "Build for Windows failed"
+    uses: ./.github/workflows/build-windows.yml
+    with:
+    # Передайте необходимые параметры, если требуется
 
   build-macos:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.21'
-
-      - name: Install dependencies
-        run: go mod tidy
-
-      - name: Build server for macOS
-        run: |
-          mkdir -p build/darwin
-          GOOS=darwin GOARCH=amd64 go build -o build/darwin/server ./cmd/server
-
-      - name: Create server config file
-        run: |
-          echo "server:
-            host: localhost
-            port: 8080
-          redis:
-            host: localhost
-            port: 6379
-            password: \"my_redis_password\"
-          db:
-            dsn: \"postgres://postgres:root@localhost:5432\"" > build/darwin/config-server.yaml
-
-      - name: Build client for macOS
-        run: |
-          mkdir -p build/darwin
-          GOOS=darwin GOARCH=amd64 go build -o build/darwin/client ./cmd/client
-
-      - name: Create client config file
-        run: |
-          echo "server:
-            host: localhost
-            port: 8080" > build/darwin/config-client.yaml
-
-      - name: Create release directory
-        run: mkdir -p release
-
-      - name: Create ZIP archive for macOS
-        run: |
-          cd build
-          zip -r ../release/darwin.zip darwin
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts-darwin
-          path: release/darwin.zip
-
-      - name: Check build-macos success
-        if: failure()
-        run: echo "Build for macOS failed"
+    uses: ./.github/workflows/build-macos.yml
+    with:
+    # Передайте необходимые параметры, если требуется
 
   release:
-    needs: [build-linux, build-windows, build-macos]
-    runs-on: ubuntu-latest
+    needs: [build, build-windows, build-macos]
+    runs-on: ubuntu-22.04
+    if: ${{ always() && needs.build.result == 'success' && needs.build-windows.result == 'success' && needs.build-macos.result == 'success' }}
 
     steps:
       - name: Download build artifacts for Linux
