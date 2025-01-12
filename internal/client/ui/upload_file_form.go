@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/rivo/tview"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"strings"
 )
 
 func (m *Menu) showSendFileForm() {
@@ -34,6 +35,14 @@ func (m *Menu) showSendFileForm() {
 			if userPath == "" {
 				info.SetText("User Path cannot be empty")
 				return
+			}
+
+			if !strings.HasPrefix(userPath, "/") {
+				userPath = "/" + userPath
+			}
+
+			if strings.HasSuffix(userPath, "/") {
+				userPath = strings.TrimSuffix(userPath, "/")
 			}
 
 			progressChan := make(chan int)
