@@ -17,9 +17,15 @@ jobs:
       - name: Install dependencies
         run: go mod tidy
 
+      - name: Create build directory
+        run: |
+          if (-Not (Test-Path -Path build/windows)) {
+            New-Item -ItemType Directory -Path build/windows
+          }
+        shell: pwsh
+
       - name: Build server for Windows
         run: |
-          mkdir -p build/windows
           $env:GOOS="windows"
           $env:GOARCH="amd64"
           go build -o build/windows/server.exe ./cmd/server
@@ -39,7 +45,6 @@ jobs:
 
       - name: Build client for Windows
         run: |
-          mkdir -p build/windows
           $env:GOOS="windows"
           $env:GOARCH="amd64"
           go build -o build/windows/client.exe ./cmd/client
@@ -52,12 +57,17 @@ jobs:
             port: 8080" > build/windows/config-client.yaml
 
       - name: Create release directory
-        run: mkdir -p release
+        run: |
+          if (-Not (Test-Path -Path release)) {
+            New-Item -ItemType Directory -Path release
+          }
+        shell: pwsh
 
       - name: Create ZIP archive for Windows
         run: |
           cd build
           Compress-Archive -Path .\windows -DestinationPath ..\release\windows.zip
+        shell: pwsh
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
