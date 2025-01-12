@@ -19,14 +19,14 @@ jobs:
 
       - name: Create build directory
         run: |
-          if (-Not (Test-Path -Path build/windows)) {
-            New-Item -ItemType Directory -Path build/windows
+          if (-Not (Test-Path -Path build/GophKeeper-windows)) {
+            New-Item -ItemType Directory -Path build/GophKeeper-windows
           }
-          if (-Not (Test-Path -Path build/windows/configs)) {
-            New-Item -ItemType Directory -Path build/windows/configs
+          if (-Not (Test-Path -Path build/GophKeeper-windows/configs)) {
+            New-Item -ItemType Directory -Path build/GophKeeper-windows/configs
           }
-          if (-Not (Test-Path -Path build/windows/logs)) {
-            New-Item -ItemType Directory -Path build/windows/logs
+          if (-Not (Test-Path -Path build/GophKeeper-windows/logs)) {
+            New-Item -ItemType Directory -Path build/GophKeeper-windows/logs
           }
         shell: pwsh
 
@@ -34,7 +34,7 @@ jobs:
         run: |
           $env:GOOS="windows"
           $env:GOARCH="amd64"
-          go build -o build/windows/server.exe ./cmd/server
+          go build -o build/GophKeeper-windows/server.exe ./cmd/server
         shell: pwsh
 
       - name: Create server config file
@@ -50,21 +50,21 @@ jobs:
           db:
             dsn: "postgres://postgres:root@localhost:5432"
           "@
-          $config | Out-File -FilePath build/windows/config-server.yaml -Encoding utf8
+          $config | Out-File -FilePath build/GophKeeper-windows/configs/config-server.yaml -Encoding utf8
         shell: pwsh
 
       - name: Build client for Windows
         run: |
           $env:GOOS="windows"
           $env:GOARCH="amd64"
-          go build -o build/windows/client.exe ./cmd/client
+          go build -o build/GophKeeper-windows/client.exe ./cmd/client
         shell: pwsh
 
       - name: Create client config file
         run: |
           echo "server:
             host: localhost
-            port: 8080" > build/windows/configs/config-client.yaml
+            port: 8080" > build/GophKeeper-windows/configs/config-client.yaml
 
       - name: Create release directory
         run: |
@@ -76,14 +76,14 @@ jobs:
       - name: Create ZIP archive for Windows
         run: |
           cd build
-          Compress-Archive -Path .\windows -DestinationPath ..\release\windows.zip
+          Compress-Archive -Path .\GophKeeper-windows -DestinationPath ..\release\GophKeeper-windows.zip
         shell: pwsh
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-windows
-          path: release/windows.zip
+          path: release/GophKeeper-windows.zip
 
       - name: Check build-windows success
         if: failure()

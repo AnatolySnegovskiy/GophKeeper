@@ -19,10 +19,10 @@ jobs:
 
       - name: Build server for macOS
         run: |
-          mkdir -p build/darwin
-          mkdir -p build/darwin/configs
-          mkdir -p build/darwin/logs
-          GOOS=darwin GOARCH=amd64 go build -o build/darwin/server ./cmd/server
+          mkdir -p build/GophKeeper-darwin
+          mkdir -p build/GophKeeper-darwin/configs
+          mkdir -p build/GophKeeper-darwin/logs
+          GOOS=darwin GOARCH=amd64 go build -o build/GophKeeper-darwin/server ./cmd/server
 
       - name: Create server config file
         run: |
@@ -34,18 +34,17 @@ jobs:
             port: 6379
             password: \"my_redis_password\"
           db:
-            dsn: \"postgres://postgres:root@localhost:5432\"" > build/darwin/configs/config-server.yaml
+            dsn: \"postgres://postgres:root@localhost:5432\"" > build/GophKeeper-darwin/configs/config-server.yaml
 
       - name: Build client for macOS
         run: |
-          mkdir -p build/darwin
-          GOOS=darwin GOARCH=amd64 go build -o build/darwin/client ./cmd/client
+          GOOS=darwin GOARCH=amd64 go build -o build/GophKeeper-darwin/client ./cmd/client
 
       - name: Create client config file
         run: |
           echo "server:
             host: localhost
-            port: 8080" > build/darwin/configs/config-client.yaml
+            port: 8080" > build/GophKeeper-darwin/configs/config-client.yaml
 
       - name: Create release directory
         run: mkdir -p release
@@ -53,13 +52,13 @@ jobs:
       - name: Create ZIP archive for macOS
         run: |
           cd build
-          zip -r ../release/darwin.zip darwin
+          zip -r ../release/GophKeeper-darwin.zip GophKeeper-darwin
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-darwin
-          path: release/darwin.zip
+          path: release/GophKeeper-darwin.zip
 
       - name: Check build-macos success
         if: failure()

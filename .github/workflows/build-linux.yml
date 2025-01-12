@@ -19,10 +19,10 @@ jobs:
 
       - name: Build server for Linux
         run: |
-          mkdir -p build/linux
-          mkdir -p build/linux/configs
-          mkdir -p build/darwin/logs
-          GOOS=linux GOARCH=amd64 go build -o build/linux/server ./cmd/server
+          mkdir -p build/GophKeeper-linux
+          mkdir -p build/GophKeeper-linux/configs
+          mkdir -p build/GophKeeper-linux/logs
+          GOOS=linux GOARCH=amd64 go build -o build/GophKeeper-linux/server ./cmd/server
 
       - name: Create server config file
         run: |
@@ -34,18 +34,17 @@ jobs:
             port: 6379
             password: \"my_redis_password\"
           db:
-            dsn: \"postgres://postgres:root@localhost:5432\"" > build/linux/configs/config-server.yaml
+            dsn: \"postgres://postgres:root@localhost:5432\"" > build/GophKeeper-linux/configs/config-server.yaml
 
       - name: Build client for Linux
         run: |
-          mkdir -p build/linux
-          GOOS=linux GOARCH=amd64 go build -o build/linux/client ./cmd/client
+          GOOS=linux GOARCH=amd64 go build -o build/GophKeeper-linux/client ./cmd/client
 
       - name: Create client config file
         run: |
           echo "server:
             host: localhost
-            port: 8080" > build/linux/configs/config-client.yaml
+            port: 8080" > build/GophKeeper-linux/configs/config-client.yaml
 
       - name: Create release directory
         run: mkdir -p release
@@ -53,13 +52,13 @@ jobs:
       - name: Create ZIP archive for Linux
         run: |
           cd build
-          zip -r ../release/linux.zip linux
+          zip -r ../release/GophKeeper-linux.zip GophKeeper-linux
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-linux
-          path: release/linux.zip
+          path: release/GophKeeper-linux.zip
 
       - name: Check build-linux success
         if: failure()

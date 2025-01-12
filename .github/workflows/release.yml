@@ -60,7 +60,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/linux.zip
+          asset_path: release/GophKeeper-linux.zip
           asset_name: GophKeeper-linux.zip
           asset_content_type: application/zip
 
@@ -71,7 +71,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/windows.zip
+          asset_path: release/GophKeeper-windows.zip
           asset_name: GophKeeper-windows.zip
           asset_content_type: application/zip
 
@@ -82,6 +82,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/darwin.zip
+          asset_path: release/GophKeeper-darwin.zip
           asset_name: GophKeeper-darwin.zip
           asset_content_type: application/zip
