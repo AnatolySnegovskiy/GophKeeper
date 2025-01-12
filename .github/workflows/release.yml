@@ -16,10 +16,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go-version }}
 
@@ -60,10 +60,10 @@ jobs:
           zip -r ../release/${{ matrix.os }}.zip ${{ matrix.os }}
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: build-artifacts-${{ matrix.os }}
-          path: release/
+          path: release/${{ matrix.os }}.zip
 
   release:
     needs: build
@@ -71,19 +71,19 @@ jobs:
 
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: build-artifacts-ubuntu-latest
           path: release/
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: build-artifacts-windows-latest
           path: release/
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: build-artifacts-macos-latest
           path: release/
