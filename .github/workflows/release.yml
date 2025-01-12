@@ -60,6 +60,9 @@ jobs:
             host: localhost
             port: 8080" > build/${{ matrix.os }}/config-client.yaml
 
+      - name: Create release directory
+        run: mkdir -p release
+
       - name: Create ZIP archive for ${{ matrix.os }}
         run: |
           cd build
