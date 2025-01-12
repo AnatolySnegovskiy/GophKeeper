@@ -33,7 +33,7 @@ func (c *Config) parseYaml() error {
 		return err
 	}
 
-	configFile := filepath.Join(cwd, "config.yaml")
+	configFile := filepath.Join(cwd, "configs/config-server.yaml")
 	file, err := os.ReadFile(configFile)
 	if err != nil {
 		return err

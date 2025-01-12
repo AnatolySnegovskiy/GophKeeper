@@ -24,7 +24,7 @@ func handleError(logger *slog.Logger, err error) {
 }
 
 func main() {
-	file, err := os.OpenFile("log.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile("logs/server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Failed to open log file")
 		os.Exit(1)

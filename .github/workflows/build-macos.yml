@@ -32,7 +32,7 @@ jobs:
             port: 6379
             password: \"my_redis_password\"
           db:
-            dsn: \"postgres://postgres:root@localhost:5432\"" > build/darwin/config-server.yaml
+            dsn: \"postgres://postgres:root@localhost:5432\"" > build/darwin/configs/config-server.yaml
 
       - name: Build client for macOS
         run: |
@@ -43,7 +43,7 @@ jobs:
         run: |
           echo "server:
             host: localhost
-            port: 8080" > build/darwin/config-client.yaml
+            port: 8080" > build/darwin/configs/config-client.yaml
 
       - name: Create release directory
         run: mkdir -p release

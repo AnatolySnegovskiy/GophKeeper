@@ -32,7 +32,7 @@ jobs:
             port: 6379
             password: \"my_redis_password\"
           db:
-            dsn: \"postgres://postgres:root@localhost:5432\"" > build/linux/config-server.yaml
+            dsn: \"postgres://postgres:root@localhost:5432\"" > build/linux/configs/config-server.yaml
 
       - name: Build client for Linux
         run: |
@@ -43,7 +43,7 @@ jobs:
         run: |
           echo "server:
             host: localhost
-            port: 8080" > build/linux/config-client.yaml
+            port: 8080" > build/linux/configs/config-client.yaml
 
       - name: Create release directory
         run: mkdir -p release
