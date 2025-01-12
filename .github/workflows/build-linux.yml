@@ -20,6 +20,7 @@ jobs:
       - name: Build server for Linux
         run: |
           mkdir -p build/linux
+          mkdir -p build/linux/configs
           GOOS=linux GOARCH=amd64 go build -o build/linux/server ./cmd/server
 
       - name: Create server config file

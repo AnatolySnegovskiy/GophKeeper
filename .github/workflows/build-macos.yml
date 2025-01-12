@@ -37,6 +37,7 @@ jobs:
       - name: Build client for macOS
         run: |
           mkdir -p build/darwin
+          mkdir -p build/darwin/configs
           GOOS=darwin GOARCH=amd64 go build -o build/darwin/client ./cmd/client
 
       - name: Create client config file
