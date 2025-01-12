@@ -20,7 +20,10 @@ jobs:
       - name: Build server for Windows
         run: |
           mkdir -p build/windows
-          cmd /c "set GOOS=windows && set GOARCH=amd64 && go build -o build/windows/server.exe ./cmd/server"
+          $env:GOOS="windows"
+          $env:GOARCH="amd64"
+          go build -o build/windows/server.exe ./cmd/server
+        shell: pwsh
 
       - name: Create server config file
         run: |
@@ -37,7 +40,10 @@ jobs:
       - name: Build client for Windows
         run: |
           mkdir -p build/windows
-          cmd /c "set GOOS=windows && set GOARCH=amd64 && go build -o build/windows/client.exe ./cmd/client"
+          $env:GOOS="windows"
+          $env:GOARCH="amd64"
+          go build -o build/windows/client.exe ./cmd/client
+        shell: pwsh
 
       - name: Create client config file
         run: |
