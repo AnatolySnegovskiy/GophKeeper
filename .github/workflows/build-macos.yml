@@ -1,7 +1,6 @@
 name: Build macOS
 
-on:
-  workflow_call:
+on: [workflow_call]
 
 jobs:
   build-macos:
