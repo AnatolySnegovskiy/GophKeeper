@@ -37,12 +37,24 @@ func (m *Menu) showRegistrationForm() {
 }
 
 func (m *Menu) showAuthorizationForm() {
-	form := tview.NewForm().
-		AddInputField("Username", "", 20, nil, nil).
-		AddPasswordField("Password", "", 20, '*', nil).
+	var username, password string
+	form := tview.NewForm()
+	form.AddInputField("Username", "", 20, nil, func(text string) { username = text }).
+		AddPasswordField("Password", "", 20, '*', func(text string) { password = text }).
 		AddButton("Login", func() {
-			// Здесь нужно добавить логику авторизации
-			// После успешной авторизации можно перейти к следующему меню
+			authenticate, err := m.grpcClient.Authenticate(context.Background(), username, password)
+			if err != nil {
+				m.errorHandler(err, func() {
+					m.showAuthorizationForm()
+				})
+				return
+			}
+
+			if !authenticate.Success {
+				form.AddTextArea("Error", "Неверный логин или пароль", 20, 4, 255, nil)
+				return
+			}
+
 			m.showAppMenu()
 		}).
 		AddButton("Cancel", func() {

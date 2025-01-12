@@ -29,7 +29,7 @@ func TestShowServerFilesMenu(t *testing.T) {
 	}, nil).AnyTimes()
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	grpcClient := client.NewGrpcClient(logger, mockClient, "Test", "Test")
+	grpcClient := client.NewGrpcClient(logger, mockClient)
 
 	menu := &Menu{
 		app:        tview.NewApplication(),

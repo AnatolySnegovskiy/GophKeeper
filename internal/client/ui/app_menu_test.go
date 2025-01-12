@@ -26,7 +26,7 @@ func TestShowAppMenu(t *testing.T) {
 	}, nil).AnyTimes()
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	grpcClient := client.NewGrpcClient(logger, mockClient, login, login)
+	grpcClient := client.NewGrpcClient(logger, mockClient)
 
 	// Create a test menu
 	menu := &Menu{

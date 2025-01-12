@@ -24,7 +24,7 @@ func TestShowPasswordMenu(t *testing.T) {
 		},
 	}, nil).AnyTimes()
 
-	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient, login, login)
+	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient)
 
 	menu := &Menu{
 		app:        tview.NewApplication(),

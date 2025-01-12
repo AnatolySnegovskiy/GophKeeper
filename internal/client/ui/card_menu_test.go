@@ -46,7 +46,7 @@ func TestShowCardsMenu(t *testing.T) {
 		Metadata: "{\"file_name\":\"The.Union.2024.DUB.WEB-DLRip.720p.x264.seleZen.mkv\",\"file_extension\":\".mkv\",\"mem_type\":\"video/webm\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2518298229}",
 	}, nil).AnyTimes()
 
-	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient, "TEST", "TEST")
+	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient)
 	menu := &Menu{
 		app:        tview.NewApplication(),
 		title:      "Test Title",
@@ -134,7 +134,7 @@ func TestShowCardForm(t *testing.T) {
 	}
 	mockClient.EXPECT().UploadFile(gomock.Any()).Return(mockStream, nil).AnyTimes()
 
-	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient, "TEST", "TEST")
+	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient)
 	menu := &Menu{
 		app:        tview.NewApplication(),
 		title:      "Test Title",

@@ -8,6 +8,7 @@ import (
 	"goph_keeper/internal/server"
 	"goph_keeper/internal/server/services/db"
 	"goph_keeper/internal/server/services/jwt"
+	"io"
 	"log/slog"
 	"net"
 	"os"
@@ -23,7 +24,13 @@ func handleError(logger *slog.Logger, err error) {
 }
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	file, err := os.OpenFile("log.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println("Failed to open log file")
+		os.Exit(1)
+	}
+	multiWriter := io.MultiWriter(file, os.Stdout)
+	logger := slog.New(slog.NewJSONHandler(multiWriter, nil))
 	conf, err := config.NewConfig()
 	handleError(logger, err)
 	redisClient := redis.NewClient(&redis.Options{

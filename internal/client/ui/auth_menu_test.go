@@ -15,14 +15,13 @@ import (
 )
 
 func TestShowRegistrationForm(t *testing.T) {
-	login := "TEST2"
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockClient := mocks.NewMockGophKeeperV1ServiceClient(ctrl)
 	mockClient.EXPECT().RegisterUser(gomock.Any(), gomock.Any()).Return(&v1.RegisterUserResponse{
 		Success: true,
 	}, nil).AnyTimes()
-	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient, login, login)
+	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient)
 
 	menu := &Menu{
 		app:        tview.NewApplication(),
@@ -81,7 +80,7 @@ func TestShowRegistrationFormFail(t *testing.T) {
 		Success: false,
 	}, errors.New("error")).AnyTimes()
 
-	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient, "TEST", "TEST")
+	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient)
 	menu := &Menu{
 		app:        tview.NewApplication(),
 		title:      "Test Title",

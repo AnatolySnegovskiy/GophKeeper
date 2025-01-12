@@ -23,10 +23,8 @@ type GrpcClient struct {
 	sizeChunk  int32
 }
 
-func NewGrpcClient(logger *slog.Logger, grpcClient v1.GophKeeperV1ServiceClient, login string, password string) *GrpcClient {
+func NewGrpcClient(logger *slog.Logger, grpcClient v1.GophKeeperV1ServiceClient) *GrpcClient {
 	client := &GrpcClient{
-		login:     login,
-		password:  password,
 		logger:    logger,
 		sizeChunk: 1024 * 1024,
 	}
@@ -57,9 +55,16 @@ func (c *GrpcClient) Authenticate(ctx context.Context, login string, password st
 		return nil, err
 	}
 
-	return c.grpcClient.Verify2FA(ctx, &v1.Verify2FARequest{
+	result, err := c.grpcClient.Verify2FA(ctx, &v1.Verify2FARequest{
 		Token: string(token),
 	})
+
+	if err == nil && result.Success {
+		c.login = login
+		c.password = password
+	}
+
+	return result, err
 }
 
 func (c *GrpcClient) RegisterUser(ctx context.Context, login string, password string) (*v1.RegisterUserResponse, error) {

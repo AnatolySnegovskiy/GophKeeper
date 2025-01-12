@@ -5,6 +5,7 @@ import (
 	"github.com/rivo/tview"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	client2 "goph_keeper/config/client"
 	"goph_keeper/internal/client"
 	"goph_keeper/internal/client/ui"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
@@ -25,13 +26,16 @@ func main() {
 		fmt.Println("Failed to open log file")
 		os.Exit(1)
 	}
+
 	defer file.Close()
 	logger := slog.New(slog.NewJSONHandler(file, nil))
 	logger.Info("Log file opened")
+	conf, err := client2.NewConfig()
+	handleError(logger, err)
 
-	conn, _ := grpc.NewClient("127.0.0.1:8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, _ := grpc.NewClient(conf.Server.Host+":"+conf.Server.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer conn.Close()
-	c := client.NewGrpcClient(logger, v1.NewGophKeeperV1ServiceClient(conn), "Test", "Test")
+	c := client.NewGrpcClient(logger, v1.NewGophKeeperV1ServiceClient(conn))
 	app := tview.NewApplication()
 	menu := ui.NewMenu(app, logger, c)
 	menu.ShowMainMenu()

@@ -1,4 +1,4 @@
-package server
+package client
 
 import (
 	"gopkg.in/yaml.v3"
@@ -10,14 +10,6 @@ type Config struct {
 	Server struct {
 		Host string `yaml:"host"`
 		Port string `yaml:"port"`
-	}
-	Redis struct {
-		Host     string `yaml:"host"`
-		Port     string `yaml:"port"`
-		Password string `yaml:"password"`
-	}
-	DB struct {
-		DSN string `yaml:"dsn"`
 	}
 }
 
