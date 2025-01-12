@@ -21,6 +21,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -40,7 +41,8 @@ func NewGrpcServer(logger *slog.Logger, jwt *jwt.Jwt, redis *redis.Client, db *g
 	server.jwt = jwt
 	server.redis = redis
 	server.db = db
-	server.storagePath = "./cmd/server/storage"
+	cwd, _ := os.Getwd()
+	server.storagePath = filepath.Join(cwd, "storage")
 	_ = os.Mkdir(server.storagePath, os.ModePerm)
 	return server
 }
