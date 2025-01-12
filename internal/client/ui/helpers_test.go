@@ -1,18 +1,23 @@
 package ui
 
 import (
+	"context"
 	"github.com/gdamore/tcell/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/rivo/tview"
+	"goph_keeper/internal/client"
 	"goph_keeper/internal/mocks"
 	"goph_keeper/internal/services"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"log/slog"
 	"os"
 	"strconv"
 	"testing"
 )
 
-func getMockGRPCClient(t *testing.T, login string) *mocks.MockGophKeeperV1ServiceClient {
+var login = "TEST"
+
+func getMockGRPCClient(t *testing.T) *mocks.MockGophKeeperV1ServiceClient {
 	ssh := services.NewSshKeyGen()
 	publicKey, _ := ssh.Generate(login)
 	randomToken := strconv.Itoa(10)
@@ -28,8 +33,24 @@ func getMockGRPCClient(t *testing.T, login string) *mocks.MockGophKeeperV1Servic
 		Success:  true,
 		JwtToken: randomToken,
 	}, nil).AnyTimes()
-
 	return mockClient
+}
+
+func getGrpcClient(mockClient v1.GophKeeperV1ServiceClient, logger *slog.Logger) *client.GrpcClient {
+	grpcClient := client.NewGrpcClient(logger, mockClient)
+	_, _ = grpcClient.Authenticate(context.Background(), login, "123")
+
+	return grpcClient
+}
+
+func getMenu(mockClient v1.GophKeeperV1ServiceClient) *Menu {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	return &Menu{
+		app:        tview.NewApplication(),
+		title:      "Test Title",
+		grpcClient: getGrpcClient(mockClient, logger),
+		logger:     logger,
+	}
 }
 
 func clear() {

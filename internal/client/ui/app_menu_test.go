@@ -3,10 +3,7 @@ package ui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/golang/mock/gomock"
-	"goph_keeper/internal/client"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
-	"log/slog"
-	"os"
 	"testing"
 
 	"github.com/rivo/tview"
@@ -14,8 +11,7 @@ import (
 )
 
 func TestShowAppMenu(t *testing.T) {
-	login := "TEST"
-	mockClient := getMockGRPCClient(t, login)
+	mockClient := getMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{
 			{
@@ -24,16 +20,8 @@ func TestShowAppMenu(t *testing.T) {
 			},
 		},
 	}, nil).AnyTimes()
-
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	grpcClient := client.NewGrpcClient(logger, mockClient)
-
 	// Create a test menu
-	menu := &Menu{
-		app:        tview.NewApplication(),
-		title:      "Test Title",
-		grpcClient: grpcClient,
-	}
+	menu := getMenu(mockClient)
 
 	// Call the showAppMenu function
 	menu.showAppMenu()

@@ -21,12 +21,11 @@ func TestShowRegistrationForm(t *testing.T) {
 	mockClient.EXPECT().RegisterUser(gomock.Any(), gomock.Any()).Return(&v1.RegisterUserResponse{
 		Success: true,
 	}, nil).AnyTimes()
-	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient)
-
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	menu := &Menu{
 		app:        tview.NewApplication(),
-		title:      "Test Title",
-		grpcClient: grpcClient,
+		logger:     logger,
+		grpcClient: client.NewGrpcClient(logger, mockClient),
 	}
 
 	menu.showRegistrationForm()
@@ -80,14 +79,12 @@ func TestShowRegistrationFormFail(t *testing.T) {
 		Success: false,
 	}, errors.New("error")).AnyTimes()
 
-	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	menu := &Menu{
 		app:        tview.NewApplication(),
-		title:      "Test Title",
-		grpcClient: grpcClient,
-		logger:     slog.New(slog.NewJSONHandler(os.Stdout, nil)),
+		logger:     logger,
+		grpcClient: client.NewGrpcClient(logger, mockClient),
 	}
-
 	menu.showRegistrationForm()
 
 	focused := menu.app.GetFocus()
@@ -135,13 +132,12 @@ func TestShowRegistrationFormFail(t *testing.T) {
 }
 
 func TestShowAuthorizationForm(t *testing.T) {
-	mockClient := getMockGRPCClient(t, "TEST")
-	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient)
-
+	mockClient := getMockGRPCClient(t)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	menu := &Menu{
 		app:        tview.NewApplication(),
-		logger:     slog.New(slog.NewJSONHandler(os.Stdout, nil)),
-		grpcClient: grpcClient,
+		logger:     logger,
+		grpcClient: client.NewGrpcClient(logger, mockClient),
 	}
 
 	menu.showAuthorizationForm()

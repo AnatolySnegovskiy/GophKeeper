@@ -7,11 +7,8 @@ import (
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
-	"goph_keeper/internal/client"
 	"goph_keeper/internal/services/entities"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
-	"log/slog"
-	"os"
 	"testing"
 )
 
@@ -33,7 +30,7 @@ func TestShowCardsMenu(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	defer ctrl.Finish()
-	mockClient := getMockGRPCClient(t, "TEST")
+	mockClient := getMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{
 			{UserPath: "path/to/card1", Uuid: "uuid1"},
@@ -46,13 +43,7 @@ func TestShowCardsMenu(t *testing.T) {
 		Metadata: "{\"file_name\":\"The.Union.2024.DUB.WEB-DLRip.720p.x264.seleZen.mkv\",\"file_extension\":\".mkv\",\"mem_type\":\"video/webm\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2518298229}",
 	}, nil).AnyTimes()
 
-	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient)
-	menu := &Menu{
-		app:        tview.NewApplication(),
-		title:      "Test Title",
-		grpcClient: grpcClient,
-		logger:     slog.New(slog.NewJSONHandler(os.Stdout, nil)),
-	}
+	menu := getMenu(mockClient)
 
 	// Ожидания для DownloadFile
 	mockStream := &MockDownloadFileClient{
@@ -110,7 +101,7 @@ func (m *MockUploadFileClient) CloseSend() error {
 func TestShowCardForm(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockClient := getMockGRPCClient(t, "TEST")
+	mockClient := getMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{
 			{UserPath: "path/to/card1", Uuid: "uuid1"},
@@ -133,14 +124,7 @@ func TestShowCardForm(t *testing.T) {
 		},
 	}
 	mockClient.EXPECT().UploadFile(gomock.Any()).Return(mockStream, nil).AnyTimes()
-
-	grpcClient := client.NewGrpcClient(slog.New(slog.NewJSONHandler(os.Stdout, nil)), mockClient)
-	menu := &Menu{
-		app:        tview.NewApplication(),
-		title:      "Test Title",
-		grpcClient: grpcClient,
-		logger:     slog.New(slog.NewJSONHandler(os.Stdout, nil)),
-	}
+	menu := getMenu(mockClient)
 
 	fileCard := &entities.FileCard{
 		CardName:    "Test Card",
