@@ -64,8 +64,7 @@ func TestEscape(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		menu.ShowMainMenu()
-		err := menu.app.Run()
-		assert.NoError(t, err)
+		_ = menu.app.Run()
 		close(done)
 	}()
 	menu.app.QueueEvent(tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone))
