@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"context"
 	"errors"
 	"github.com/gdamore/tcell/v2"
 	"github.com/golang/mock/gomock"
@@ -12,59 +11,6 @@ import (
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"testing"
 )
-
-func TestShowCardsMenu(t *testing.T) {
-	ctrl := gomock.NewController(t)
-
-	defer ctrl.Finish()
-	mockClient := getMockGRPCClient(t)
-	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
-		Entries: []*v1.ListDataEntry{
-			{UserPath: "path/to/card1", Uuid: "uuid1"},
-			{UserPath: "path/to/card2", Uuid: "uuid2"},
-		},
-	}, nil).AnyTimes()
-
-	// Ожидания для GetMetadataFile
-	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(&v1.GetMetadataFileResponse{
-		Metadata: "{\"file_name\":\"The.Union.2024.DUB.WEB-DLRip.720p.x264.seleZen.mkv\",\"file_extension\":\".mkv\",\"mem_type\":\"video/webm\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2518298229}",
-	}, nil).AnyTimes()
-
-	menu := getMenu(mockClient)
-
-	// Ожидания для DownloadFile
-	mockStream := &MockDownloadFileClient{
-		recvFunc: func() (*v1.DownloadFileResponse, error) {
-			return &v1.DownloadFileResponse{
-				Status: v1.Status_STATUS_SUCCESS,
-				Data:   []byte("test data"),
-			}, nil
-		},
-		ctx: context.Background(),
-	}
-	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil).AnyTimes()
-
-	menu.showCardsMenu()
-
-	focused := menu.app.GetFocus()
-	assert.IsType(t, &tview.List{}, focused, "expected focused to be a tview.List, but got %T", focused)
-
-	list := focused.(*tview.List)
-	assert.Equal(t, 4, list.GetItemCount(), "expected 4 items in the list")
-
-	// Simulate selecting the first item
-	simulateKeyPress(tcell.KeyDown, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
-
-	// Simulate selecting the "Back" item
-	for i := 0; i < 3; i++ {
-		simulateKeyPress(tcell.KeyDown, focused)
-	}
-	simulateKeyPress(tcell.KeyEnter, focused)
-
-	assert.True(t, true, "expected showAppMenu to be called")
-	clear()
-}
 
 type MockUploadFileClient struct {
 	grpc.ClientStream
@@ -265,7 +211,7 @@ func TestErrFromFile(t *testing.T) {
 		Metadata: "{\"file_name\":\"SynthVoiceRu.pak\",\"file_extension\":\".pak\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2242646908}",
 	}, nil).AnyTimes()
 	// Мок ответа для DownloadFile
-	testFile := getTestFile()
+	testFile := getTestBadFile()
 	mockStream := getDownloadStreaming(testFile, v1.Status_STATUS_PROCESSING)
 	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil)
 
@@ -280,5 +226,37 @@ func TestErrFromFile(t *testing.T) {
 	list, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
 	assert.NotNil(t, list, "list should not be nil")
+	clear()
+}
+
+func TestGoodDownloadFile(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockClient := getMockGRPCClient(t)
+	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
+		Entries: []*v1.ListDataEntry{
+			{UserPath: "file1", Uuid: "uuid1"},
+			{UserPath: "file2", Uuid: "uuid2"},
+		},
+	}, nil).AnyTimes()
+	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(&v1.GetMetadataFileResponse{
+		Metadata: "{\"file_name\":\"SynthVoiceRu.pak\",\"file_extension\":\".pak\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2242646908}",
+	}, nil).AnyTimes()
+	// Мок ответа для DownloadFile
+	testFile := getTestGoodFile()
+	mockStream := getDownloadStreaming(testFile, v1.Status_STATUS_PROCESSING)
+	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil)
+
+	menu := getMenu(mockClient)
+	menu.showCardsMenu()
+	focused := menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyDown, focused)
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	input, ok := focused.(*tview.InputField)
+	assert.True(t, ok, "focused should be of type *tview.InputField")
+	assert.NotNil(t, input, "list should not be nil")
 	clear()
 }

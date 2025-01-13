@@ -5,7 +5,6 @@ import (
 	"github.com/rivo/tview"
 	"goph_keeper/internal/services/entities"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
-	"log"
 	"os"
 	"strings"
 )
@@ -32,7 +31,6 @@ func (m *Menu) showCardsMenu() {
 		list.AddItem(firstPart, "", 0, func() {
 			file, err := m.grpcClient.DownloadFile(context.Background(), uuid, os.TempDir(), nil)
 			if err != nil {
-				log.Fatal(err)
 				m.errorHandler(err, func() {
 					m.showCardsMenu()
 				})

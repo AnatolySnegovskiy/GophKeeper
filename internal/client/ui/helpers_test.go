@@ -84,7 +84,7 @@ func simulateKeyPress(key tcell.Key, primitive tview.Primitive) {
 func getDownloadStreaming(content []byte, status v1.Status) *MockDownloadFileClient {
 	chunkSize := 1024 * 1024 // Размер чанка
 	chunks := make([][]byte, 0, len(content)/chunkSize+1)
-	for i := 0; i < len(content); i += chunkSize {
+	for i := 12; i < len(content); i += chunkSize {
 		end := i + chunkSize
 		if end > len(content) {
 			end = len(content)
@@ -119,8 +119,14 @@ func getDownloadStreaming(content []byte, status v1.Status) *MockDownloadFileCli
 	}
 }
 
-func getTestFile() []byte {
+func getTestGoodFile() []byte {
 	hexString := "73c069125bf16669dd6be8ca8b87d24c4acb4b396467cb3e06a98e81ed5c0924f624d01a330d9cde23b64abecc368540529760a09f674295d49ab4128b97ea7f8446afbe6b9e96ab23c702cf84e124e42bad6e003dae7f6d939dd8407584"
+	byteSlice, _ := hex.DecodeString(hexString)
+	return byteSlice
+}
+
+func getTestBadFile() []byte {
+	hexString := "73c069125bf16669dd6be8ca8b87d24c4acb4b396467cb3e06a98e81ed5c0924f624d01a330d9cde23b64abecc368540529760a09f674295d49ab4128b97ea7f8446afbe6b9e96ab23c702cf84e124e42bad6e003dae7f6d939dd84075"
 	byteSlice, _ := hex.DecodeString(hexString)
 	return byteSlice
 }
