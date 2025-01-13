@@ -7,6 +7,10 @@ import (
 	"runtime"
 )
 
+var GetGOOS = func() string {
+	return runtime.GOOS
+}
+
 type Menu struct {
 	app        *tview.Application
 	logger     *slog.Logger
@@ -35,14 +39,14 @@ func (m *Menu) errorHandler(err error, callback func()) {
 }
 
 func isRootPath(path string) bool {
-	if runtime.GOOS == "windows" {
+	if GetGOOS() == "windows" {
 		return len(path) <= 3 && path[1] == ':'
 	}
 	return path == "/"
 }
 
 func isDriveRoot(path string) bool {
-	if runtime.GOOS == "windows" {
+	if GetGOOS() == "windows" {
 		return len(path) == 3 && path[1] == ':'
 	}
 	return false
