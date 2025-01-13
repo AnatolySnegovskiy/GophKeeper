@@ -4,6 +4,8 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
+	"log/slog"
+	"os"
 	"testing"
 )
 
@@ -55,12 +57,15 @@ func TestSelectAuthorization(t *testing.T) {
 
 func TestEscape(t *testing.T) {
 	menu := &Menu{
-		app:   tview.NewApplication(),
-		title: "Test Title",
+		app:    tview.NewApplication(),
+		title:  "Test Title",
+		logger: slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	}
 	done := make(chan struct{})
 	go func() {
 		menu.ShowMainMenu()
+		err := menu.app.Run()
+		assert.NoError(t, err)
 		close(done)
 	}()
 	menu.app.QueueEvent(tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone))
