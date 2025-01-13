@@ -14,8 +14,9 @@ func (m *Menu) showCardsMenu() {
 
 	if err != nil {
 		m.errorHandler(err, func() {
-			m.showCardsMenu()
+			m.showAppMenu()
 		})
+		return
 	}
 
 	list := tview.NewList()

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"errors"
 	"github.com/gdamore/tcell/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/rivo/tview"
@@ -216,5 +217,21 @@ func TestShowCardForm(t *testing.T) {
 	focused = menu.app.GetFocus()
 	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected showCardsMenu to be called after canceling")
+	clear()
+}
+
+func TestErrGetStoreDataList(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockClient := getMockGRPCClient(t)
+	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
+	menu := getMenu(mockClient)
+	menu.showCardsMenu()
+	focused := menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	list, ok := focused.(*tview.List)
+	assert.True(t, ok, "focused should be of type *tview.List")
+	assert.NotNil(t, list, "list should not be nil")
 	clear()
 }
