@@ -13,20 +13,6 @@ import (
 	"testing"
 )
 
-type MockDownloadFileClient struct {
-	grpc.ClientStream
-	recvFunc func() (*v1.DownloadFileResponse, error)
-	ctx      context.Context
-}
-
-func (m *MockDownloadFileClient) Recv() (*v1.DownloadFileResponse, error) {
-	return m.recvFunc()
-}
-
-func (m *MockDownloadFileClient) Context() context.Context {
-	return m.ctx
-}
-
 func TestShowCardsMenu(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
@@ -275,7 +261,11 @@ func TestErrFromFile(t *testing.T) {
 			{UserPath: "file2", Uuid: "uuid2"},
 		},
 	}, nil).AnyTimes()
-	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
+	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(&v1.GetMetadataFileResponse{
+		Metadata: "{\"file_name\":\"SynthVoiceRu.pak\",\"file_extension\":\".pak\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2242646908}",
+	}, nil).AnyTimes()
+	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(getDownloadStreaming("test Err"), nil).AnyTimes()
+
 	menu := getMenu(mockClient)
 	menu.showCardsMenu()
 	focused := menu.app.GetFocus()

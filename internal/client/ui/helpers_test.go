@@ -5,6 +5,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/rivo/tview"
+	"google.golang.org/grpc"
 	"goph_keeper/internal/client"
 	"goph_keeper/internal/mocks"
 	"goph_keeper/internal/services"
@@ -14,6 +15,20 @@ import (
 	"strconv"
 	"testing"
 )
+
+type MockDownloadFileClient struct {
+	grpc.ClientStream
+	recvFunc func() (*v1.DownloadFileResponse, error)
+	ctx      context.Context
+}
+
+func (m *MockDownloadFileClient) Recv() (*v1.DownloadFileResponse, error) {
+	return m.recvFunc()
+}
+
+func (m *MockDownloadFileClient) Context() context.Context {
+	return m.ctx
+}
 
 var login = "TEST"
 
@@ -61,4 +76,16 @@ func simulateKeyPress(key tcell.Key, primitive tview.Primitive) {
 	handler := primitive.InputHandler()
 	event := tcell.NewEventKey(key, 0, 0)
 	handler(event, func(p tview.Primitive) {})
+}
+
+func getDownloadStreaming(content string) *MockDownloadFileClient {
+	return &MockDownloadFileClient{
+		recvFunc: func() (*v1.DownloadFileResponse, error) {
+			return &v1.DownloadFileResponse{
+				Status: v1.Status_STATUS_SUCCESS,
+				Data:   []byte(content),
+			}, nil
+		},
+		ctx: context.Background(),
+	}
 }
