@@ -260,3 +260,40 @@ func TestGoodDownloadFile(t *testing.T) {
 	assert.NotNil(t, input, "list should not be nil")
 	clear()
 }
+
+func TestAddCard(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockClient := getMockGRPCClient(t)
+	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
+		Entries: []*v1.ListDataEntry{},
+	}, nil).AnyTimes()
+	menu := getMenu(mockClient)
+	menu.showCardsMenu()
+	focused := menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	input, ok := focused.(*tview.InputField)
+	assert.True(t, ok, "focused should be of type *tview.InputField")
+	assert.NotNil(t, input, "list should not be nil")
+	clear()
+}
+
+func TestBack(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockClient := getMockGRPCClient(t)
+	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
+		Entries: []*v1.ListDataEntry{},
+	}, nil).AnyTimes()
+	menu := getMenu(mockClient)
+	menu.showCardsMenu()
+	focused := menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyDown, focused)
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	list, ok := focused.(*tview.List)
+	assert.True(t, ok, "focused should be of type *tview.List")
+	assert.NotNil(t, list, "list should not be nil")
+	clear()
+}
