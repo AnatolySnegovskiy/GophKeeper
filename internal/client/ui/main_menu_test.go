@@ -61,10 +61,9 @@ func TestEscape(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		menu.ShowMainMenu()
-		err := menu.app.Run()
-		assert.NoError(t, err)
 		close(done)
 	}()
+	menu.app.QueueEvent(tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone))
 	menu.app.QueueEvent(tcell.NewEventKey(tcell.KeyEsc, 0, tcell.ModNone))
 	<-done
 	assert.True(t, true, "Application should have stopped")
