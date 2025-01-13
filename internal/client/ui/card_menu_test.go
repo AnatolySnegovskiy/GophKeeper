@@ -249,8 +249,33 @@ func TestErrDownloadFile(t *testing.T) {
 
 	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
 	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(&v1.GetMetadataFileResponse{
-		Metadata: "{\"file_name\":\"file1\",\"file_extension\":\".txt\",\"mem_type\":\"text/plain\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2518298229}",
+		Metadata: "{\"file_name\":\"SynthVoiceRu.pak\",\"file_extension\":\".pak\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2242646908}",
 	}, nil).AnyTimes()
+	menu := getMenu(mockClient)
+	menu.showCardsMenu()
+	focused := menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyDown, focused)
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	list, ok := focused.(*tview.List)
+	assert.True(t, ok, "focused should be of type *tview.List")
+	assert.NotNil(t, list, "list should not be nil")
+	clear()
+}
+
+func TestErrFromFile(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockClient := getMockGRPCClient(t)
+	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
+		Entries: []*v1.ListDataEntry{
+			{UserPath: "file1", Uuid: "uuid1"},
+			{UserPath: "file2", Uuid: "uuid2"},
+		},
+	}, nil).AnyTimes()
+	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
 	menu := getMenu(mockClient)
 	menu.showCardsMenu()
 	focused := menu.app.GetFocus()
