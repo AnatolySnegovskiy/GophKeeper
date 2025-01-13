@@ -242,15 +242,23 @@ func TestErrDownloadFile(t *testing.T) {
 	mockClient := getMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{
-			{UserPath: "path/to/file1", Uuid: "uuid1"},
-			{UserPath: "path/to/file2", Uuid: "uuid2"},
+			{UserPath: "file1", Uuid: "uuid1"},
+			{UserPath: "file2", Uuid: "uuid2"},
 		},
 	}, nil).AnyTimes()
 
 	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
+	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(&v1.GetMetadataFileResponse{
+		Metadata: "{\"file_name\":\"file1\",\"file_extension\":\".txt\",\"mem_type\":\"text/plain\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2518298229}",
+	}, nil).AnyTimes()
 	menu := getMenu(mockClient)
 	menu.showCardsMenu()
 	focused := menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyDown, focused)
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
 	list, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
 	assert.NotNil(t, list, "list should not be nil")
