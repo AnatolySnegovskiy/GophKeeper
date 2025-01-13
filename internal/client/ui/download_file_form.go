@@ -38,9 +38,7 @@ func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry, rollbackFilesMenu f
 			suffixes := []string{"..", ".", "/..", "/.", "/../", "/./"}
 
 			for _, suffix := range suffixes {
-				if strings.HasSuffix(directoryPath, suffix) {
-					directoryPath = strings.TrimSuffix(directoryPath, suffix)
-				}
+				directoryPath = strings.TrimSuffix(directoryPath, suffix)
 			}
 
 			fileInfo, err := os.Stat(directoryPath)
