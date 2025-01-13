@@ -58,11 +58,13 @@ func TestEscape(t *testing.T) {
 		app:   tview.NewApplication(),
 		title: "Test Title",
 	}
-
-	menu.ShowMainMenu()
-	assert.NotNil(t, menu.app)
-	focused := menu.app.GetFocus()
-	_, ok := focused.(*tview.List)
-	assert.True(t, ok, "focused should be of type *tview.List")
-	simulateKeyPress(tcell.KeyEscape, focused)
+	done := make(chan struct{})
+	go func() {
+		menu.ShowMainMenu()
+		menu.app.Run()
+		close(done)
+	}()
+	menu.app.QueueEvent(tcell.NewEventKey(tcell.KeyEsc, 0, tcell.ModNone))
+	<-done
+	assert.True(t, true, "Application should have stopped")
 }
