@@ -24,6 +24,9 @@ func TestShowDownloadFileForm(t *testing.T) {
 
 func TestShowDownloadFileFormErr(t *testing.T) {
 	mockClient := getMockGRPCClient(t)
+	testFile := getTestBadFile()
+	mockStream := getDownloadStreaming(testFile, v1.Status_STATUS_PROCESSING)
+	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil)
 	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(
 		&v1.GetMetadataFileResponse{
 			Metadata: "{\"file_name\":\"SynthVoiceRu.pak\",\"file_extension\":\".pak\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2242646908}",
