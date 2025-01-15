@@ -25,6 +25,10 @@ func (pb *ProgressBar) SetProgress(progress int) {
 	pb.SetText(fmt.Sprintf("%d%% [%s%s]", pb.current, string(repeat('#', pb.current/2)), string(repeat('-', 50-pb.current/2))))
 }
 
+func (pb *ProgressBar) GetProgress() int {
+	return pb.current
+}
+
 func repeat(char rune, count int) []rune {
 	result := make([]rune, count)
 	for i := range result {
