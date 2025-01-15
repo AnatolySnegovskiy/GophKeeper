@@ -46,15 +46,13 @@ func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry, rollbackFilesMenu f
 				m.app.QueueUpdateDraw(func() {
 					info.SetText(fmt.Sprintf("[red]Error: %s", err))
 				})
-				form.AddButton("OK", func() {
-					rollbackFilesMenu()
-				})
 				return
 			}
 
 			if !fileInfo.IsDir() {
 				directoryPath = filepath.Dir(directoryPath)
 			}
+
 			_, err = m.grpcClient.DownloadFile(context.Background(), entry.Uuid, directoryPath, progressChan)
 			if err != nil {
 				m.app.QueueUpdateDraw(func() {
@@ -66,10 +64,10 @@ func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry, rollbackFilesMenu f
 				info.SetText(fmt.Sprintf("[green]Success: %t", true))
 			})
 		}()
+
 		go func() {
 			for progress := range progressChan {
 				m.app.QueueUpdateDraw(func() {
-					println(" progress: ", progress)
 					progressBar.SetProgress(progress)
 				})
 			}
