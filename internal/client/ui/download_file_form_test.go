@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"errors"
+	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/rivo/tview"
@@ -24,7 +24,12 @@ func TestShowDownloadFileForm(t *testing.T) {
 
 func TestShowDownloadFileFormErr(t *testing.T) {
 	mockClient := getMockGRPCClient(t)
-	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
+	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(
+		&v1.GetMetadataFileResponse{
+			Metadata: "{\"file_name\":\"SynthVoiceRu.pak\",\"file_extension\":\".pak\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2242646908}",
+		},
+		nil,
+	).AnyTimes()
 	menu := getMenu(mockClient)
 
 	menu.showDownloadFileForm(&v1.ListDataEntry{
@@ -42,6 +47,12 @@ func TestShowDownloadFileFormErr(t *testing.T) {
 	assert.True(t, ok, "focused should be of type *tview.Button")
 	assert.Equal(t, "Select Directory", button.GetLabel())
 	simulateKeyPress(tcell.KeyEnter, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
+
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyTab, focused)
+	focused = menu.app.GetFocus()
+	fmt.Printf("Focused widget type: %T\n", focused)
+	_, ok = focused.(*ProgressBar)
+	assert.True(t, ok, "focused should be of type *ProgressBar")
 	clear()
 }
