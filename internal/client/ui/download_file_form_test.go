@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"errors"
 	"github.com/gdamore/tcell/v2"
+	"github.com/golang/mock/gomock"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
@@ -22,6 +24,7 @@ func TestShowDownloadFileForm(t *testing.T) {
 
 func TestShowDownloadFileFormErr(t *testing.T) {
 	mockClient := getMockGRPCClient(t)
+	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
 	menu := getMenu(mockClient)
 
 	menu.showDownloadFileForm(&v1.ListDataEntry{
@@ -38,6 +41,7 @@ func TestShowDownloadFileFormErr(t *testing.T) {
 	button, ok := focused.(*tview.Button)
 	assert.True(t, ok, "focused should be of type *tview.Button")
 	assert.Equal(t, "Select Directory", button.GetLabel())
+	simulateKeyPress(tcell.KeyEnter, focused)
 	simulateKeyPress(tcell.KeyEnter, focused)
 	clear()
 }
