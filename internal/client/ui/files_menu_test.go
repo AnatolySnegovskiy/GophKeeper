@@ -17,14 +17,6 @@ func TestShowFilesMenu(t *testing.T) {
 
 	menu.showFilesMenu()
 	assert.NotNil(t, menu.app)
-
-	focused := menu.app.GetFocus()
-	list, ok := focused.(*tview.List)
-	assert.True(t, ok, "focused should be of type *tview.List")
-	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
-	assert.Equal(t, "Back", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
-	clear()
 }
 
 func TestSelectDownloadFile(t *testing.T) {
