@@ -33,8 +33,6 @@ func TestShowDownloadFileFormErr(t *testing.T) {
 	focused := menu.app.GetFocus()
 	_, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
-	simulateKeyPress(tcell.KeyDown, focused)
-	simulateKeyPress(tcell.KeyDown, focused)
 	simulateKeyPress(tcell.KeyTab, focused)
 	focused = menu.app.GetFocus()
 	button, ok := focused.(*tview.Button)
