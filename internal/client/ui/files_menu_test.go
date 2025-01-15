@@ -53,3 +53,19 @@ func TestSelectUploadFile(t *testing.T) {
 	simulateKeyPress(tcell.KeyEnter, focused)
 	clear()
 }
+
+func TestSelectBackFile(t *testing.T) {
+	client := getMockGRPCClient(t)
+	menu := getMenu(client)
+	menu.showFilesMenu()
+
+	focused := menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyDown, focused)
+	simulateKeyPress(tcell.KeyDown, focused)
+	list, ok := focused.(*tview.List)
+	assert.True(t, ok, "focused should be of type *tview.List")
+	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
+	assert.Equal(t, "Back", currentItemName)
+	simulateKeyPress(tcell.KeyEnter, focused)
+	clear()
+}
