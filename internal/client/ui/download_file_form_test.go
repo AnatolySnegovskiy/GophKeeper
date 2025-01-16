@@ -1,10 +1,13 @@
 package ui
 
 import (
+	"github.com/golang/mock/gomock"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"log"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 )
@@ -56,9 +59,11 @@ func TestCleanDirectoryPath(t *testing.T) {
 	}
 }
 
-func TestHandleProgressUpdates(t *testing.T) {
-	progressBar := NewProgressBar(100)
-	form := tview.NewForm()
+func TestHandleFileDownload(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	info := tview.NewTextView().SetDynamicColors(true).SetText("")
 	app := tview.NewApplication()
 
 	// Запускаем приложение
@@ -68,21 +73,37 @@ func TestHandleProgressUpdates(t *testing.T) {
 		}
 	}()
 
+	entry := &v1.ListDataEntry{Uuid: "test-uuid"}
+
+	mockClient := getMockGRPCClient(t)
+	testFile := getTestGoodFile()
+	mockStream := getDownloadStreaming(testFile, v1.Status_STATUS_SUCCESS)
+	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil)
+	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(
+		&v1.GetMetadataFileResponse{
+			Metadata: "{\"file_name\":\"eteas707606254\",\"file_extension\":\"\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":82}",
+		},
+		nil,
+	).AnyTimes()
+	grpcClient := getGrpcClient(mockClient, slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	done := make(chan struct{})
 	progressChan := make(chan int)
-	rollbackFilesMenu := func() {}
 
-	go handleProgressUpdates(progressChan, progressBar, rollbackFilesMenu, form, app)
+	go func() {
+		defer close(done)
+		handleFileDownload(os.TempDir(), entry, progressChan, info, grpcClient, app)
+	}()
 
-	// Simulate progress updates
-	progressChan <- 50
-	progressChan <- 100
-	close(progressChan)
+	go func() {
+		<-progressChan
+	}()
 
-	// Wait for the goroutine to finish
-	time.Sleep(100 * time.Millisecond)
-
-	// Останавливаем приложение
-	app.Stop()
-
-	assert.Equal(t, 100, progressBar.current, "Expected progress to be 100")
+	select {
+	case <-done:
+		app.Stop()
+		assert.Equal(t, "[green]Success: true", info.GetText(false), "Expected success message")
+	case <-time.After(30 * time.Second):
+		t.Fatal("Test timed out")
+	}
+	clear()
 }
