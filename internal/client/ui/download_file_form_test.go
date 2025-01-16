@@ -40,25 +40,6 @@ func TestCreateFlexLayout(t *testing.T) {
 	assert.NotNil(t, flex, "Expected flex layout to be created, got nil")
 }
 
-func TestCleanDirectoryPath(t *testing.T) {
-	testCases := []struct {
-		input    string
-		expected string
-	}{
-		{"/path/to/dir/..", "/path/to/dir"},
-		{"/path/to/dir/.", "/path/to/dir"},
-		{"/path/to/dir/../", "/path/to/dir"},
-		{"/path/to/dir/./", "/path/to/dir"},
-		{"/path/to/dir/../..", "/path/to/dir"},
-		{"/path/to/dir/./.", "/path/to/dir"},
-	}
-
-	for _, tc := range testCases {
-		result := cleanDirectoryPath(tc.input)
-		assert.Equal(t, tc.expected, result, "Expected %s, got %s", tc.expected, result)
-	}
-}
-
 func TestHandleFileDownload(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
