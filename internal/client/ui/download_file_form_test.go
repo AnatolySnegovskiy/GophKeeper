@@ -92,7 +92,9 @@ func TestHandleFileDownload(t *testing.T) {
 
 	go func() {
 		defer close(done)
-		handleFileDownload(os.TempDir(), entry, progressChan, info, grpcClient, app)
+		tempDir := os.TempDir()
+		slog.Info("Using temporary directory", "tempDir", tempDir)
+		handleFileDownload(tempDir, entry, progressChan, info, grpcClient, app)
 	}()
 
 	go func() {
