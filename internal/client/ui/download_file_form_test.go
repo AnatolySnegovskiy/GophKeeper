@@ -99,6 +99,7 @@ func TestHandleFileDownload(t *testing.T) {
 	for progress < 100 {
 		select {
 		case progress = <-progressChan:
+			t.Logf("Progress updated to: %d%%", progress)
 		case <-time.After(30 * time.Second):
 			t.Fatal("Test timed out waiting for progress update")
 		}
@@ -107,6 +108,7 @@ func TestHandleFileDownload(t *testing.T) {
 	select {
 	case <-done:
 		app.Stop()
+		t.Log("Download completed, stopping application")
 		assert.Equal(t, "[green]Success: true", info.GetText(false), "Expected success message")
 	case <-time.After(30 * time.Second):
 		t.Fatal("Test timed out")
@@ -142,5 +144,5 @@ func TestHandleProgressUpdates(t *testing.T) {
 	// Останавливаем приложение
 	app.Stop()
 
-	assert.Equal(t, 100, progressBar.current, "Expected progress to be 100")
+	assert.Equal(t, 100, progressBar.current, "Expected progress to be 100", "Expected form to have a button with text 'OK'")
 }
