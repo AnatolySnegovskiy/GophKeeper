@@ -118,8 +118,12 @@ func TestHandleProgressUpdates(t *testing.T) {
 
 	progressChan := make(chan int)
 	rollbackFilesMenu := func() {}
+	done := make(chan struct{})
 
-	go handleProgressUpdates(progressChan, progressBar, rollbackFilesMenu, form, mockApp)
+	go func() {
+		defer close(done)
+		handleProgressUpdates(progressChan, progressBar, rollbackFilesMenu, form, mockApp)
+	}()
 
 	// Simulate progress updates
 	progressChan <- 50
@@ -127,7 +131,10 @@ func TestHandleProgressUpdates(t *testing.T) {
 	close(progressChan)
 
 	// Wait for the goroutine to finish
-	time.Sleep(100 * time.Millisecond)
+	<-done
+
+	// Verify the progress bar is updated to 100%
+	assert.Equal(t, 100, progressBar.current, "Expected progress to be 100")
 	assert.Equal(t, 100, progressBar.current, "Expected progress to be 100", "Expected form to have a button with text 'OK'")
 }
 
