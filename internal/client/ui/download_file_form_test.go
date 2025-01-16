@@ -107,3 +107,34 @@ func TestHandleFileDownload(t *testing.T) {
 	}
 	clear()
 }
+
+func TestHandleProgressUpdates(t *testing.T) {
+	progressBar := NewProgressBar(100)
+	form := tview.NewForm()
+	app := tview.NewApplication()
+
+	// Запускаем приложение
+	go func() {
+		if err := app.Run(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	progressChan := make(chan int)
+	rollbackFilesMenu := func() {}
+
+	go handleProgressUpdates(progressChan, progressBar, rollbackFilesMenu, form, app)
+
+	// Simulate progress updates
+	progressChan <- 50
+	progressChan <- 100
+	close(progressChan)
+
+	// Wait for the goroutine to finish
+	time.Sleep(100 * time.Millisecond)
+
+	// Останавливаем приложение
+	app.Stop()
+
+	assert.Equal(t, 100, progressBar.current, "Expected progress to be 100")
+}
