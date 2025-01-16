@@ -94,9 +94,15 @@ func TestHandleFileDownload(t *testing.T) {
 		handleFileDownload(os.TempDir(), entry, progressChan, info, grpcClient, app)
 	}()
 
-	go func() {
-		<-progressChan
-	}()
+	// Wait for the progress to reach 100%
+	progress := 0
+	for progress < 100 {
+		select {
+		case progress = <-progressChan:
+		case <-time.After(30 * time.Second):
+			t.Fatal("Test timed out waiting for progress update")
+		}
+	}
 
 	select {
 	case <-done:
