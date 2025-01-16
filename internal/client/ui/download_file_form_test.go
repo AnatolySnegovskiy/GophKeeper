@@ -92,7 +92,11 @@ func TestHandleFileDownload(t *testing.T) {
 
 	go func() {
 		defer close(done)
-		handleFileDownload("D:\\", entry, progressChan, info, grpcClient, app)
+		path := "D:\\"
+		if GetGOOS() != "windows" {
+			path = "/"
+		}
+		handleFileDownload(path, entry, progressChan, info, grpcClient, app)
 	}()
 
 	go func() {
