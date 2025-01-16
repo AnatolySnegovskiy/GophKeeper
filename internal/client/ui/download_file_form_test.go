@@ -5,6 +5,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"log"
 	"log/slog"
 	"os"
 	"testing"
@@ -69,7 +70,7 @@ func TestHandleFileDownload(t *testing.T) {
 	// Запускаем приложение
 	go func() {
 		if err := app.Run(); err != nil {
-			t.Fatalf("Failed to run application: %v", err)
+			log.Fatal(err)
 		}
 	}()
 
@@ -116,7 +117,7 @@ func TestHandleProgressUpdates(t *testing.T) {
 	// Запускаем приложение
 	go func() {
 		if err := app.Run(); err != nil {
-			t.Fatalf("Failed to run application: %v", err)
+			log.Fatal(err)
 		}
 	}()
 
