@@ -92,11 +92,7 @@ func TestHandleFileDownload(t *testing.T) {
 
 	go func() {
 		defer close(done)
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			log.Fatal(err)
-		}
-		handleFileDownload(homeDir, entry, progressChan, info, grpcClient, app)
+		handleFileDownload(os.TempDir(), entry, progressChan, info, grpcClient, app)
 	}()
 
 	go func() {
