@@ -125,15 +125,11 @@ func TestHandleProgressUpdates(t *testing.T) {
 		handleProgressUpdates(progressChan, progressBar, rollbackFilesMenu, form, mockApp)
 	}()
 
-	// Simulate progress updates
 	progressChan <- 50
 	progressChan <- 100
 	close(progressChan)
-
-	// Wait for the goroutine to finish
 	<-done
 
-	// Verify the progress bar is updated to 100%
 	assert.Equal(t, 100, progressBar.current, "Expected progress to be 100")
 	assert.Equal(t, 100, progressBar.current, "Expected progress to be 100", "Expected form to have a button with text 'OK'")
 }
