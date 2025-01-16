@@ -11,6 +11,12 @@ import (
 	"regexp"
 )
 
+type ApplicationInterface interface {
+	QueueUpdateDraw(func()) *tview.Application
+	Stop()
+	Draw() *tview.Application
+}
+
 func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry, rollbackFilesMenu func()) {
 	progressBar := NewProgressBar(100)
 	info := tview.NewTextView().
@@ -49,7 +55,7 @@ func createFlexLayout(form *tview.Form) *tview.Flex {
 		AddItem(form, 0, 1, true)
 }
 
-func handleFileDownload(directoryPath string, entry *v1.ListDataEntry, progressChan chan int, info *tview.TextView, grpcClient *client.GrpcClient, app *tview.Application) {
+func handleFileDownload(directoryPath string, entry *v1.ListDataEntry, progressChan chan int, info *tview.TextView, grpcClient *client.GrpcClient, app ApplicationInterface) {
 	directoryPath = cleanDirectoryPath(directoryPath)
 
 	fileInfo, err := os.Stat(directoryPath)
@@ -84,7 +90,7 @@ func cleanDirectoryPath(directoryPath string) string {
 	return cleanedPath
 }
 
-func handleProgressUpdates(progressChan chan int, progressBar *ProgressBar, rollbackFilesMenu func(), form *tview.Form, app *tview.Application) {
+func handleProgressUpdates(progressChan chan int, progressBar *ProgressBar, rollbackFilesMenu func(), form *tview.Form, app ApplicationInterface) {
 	for progress := range progressChan {
 		app.QueueUpdateDraw(func() {
 			progressBar.SetProgress(progress)

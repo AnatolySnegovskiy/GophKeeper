@@ -5,7 +5,6 @@ import (
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
-	"log"
 	"log/slog"
 	"os"
 	"testing"
@@ -64,14 +63,9 @@ func TestHandleFileDownload(t *testing.T) {
 	defer ctrl.Finish()
 
 	info := tview.NewTextView().SetDynamicColors(true).SetText("")
-	app := tview.NewApplication()
-
-	// Запускаем приложение
-	go func() {
-		if err := app.Run(); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	mockApp := &MockApplication{
+		Application: tview.NewApplication(),
+	}
 
 	entry := &v1.ListDataEntry{Uuid: "test-uuid"}
 
@@ -91,7 +85,7 @@ func TestHandleFileDownload(t *testing.T) {
 
 	go func() {
 		defer close(done)
-		handleFileDownload(os.TempDir(), entry, progressChan, info, grpcClient, app)
+		handleFileDownload(os.TempDir(), entry, progressChan, info, grpcClient, mockApp)
 	}()
 
 	// Wait for the progress to reach 100%
@@ -107,7 +101,6 @@ func TestHandleFileDownload(t *testing.T) {
 
 	select {
 	case <-done:
-		app.Stop()
 		t.Log("Download completed, stopping application")
 		assert.Equal(t, "[green]Success: true", info.GetText(false), "Expected success message")
 	case <-time.After(30 * time.Second):
@@ -119,19 +112,14 @@ func TestHandleFileDownload(t *testing.T) {
 func TestHandleProgressUpdates(t *testing.T) {
 	progressBar := NewProgressBar(100)
 	form := tview.NewForm()
-	app := tview.NewApplication()
-
-	// Запускаем приложение
-	go func() {
-		if err := app.Run(); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	mockApp := &MockApplication{
+		Application: tview.NewApplication(),
+	}
 
 	progressChan := make(chan int)
 	rollbackFilesMenu := func() {}
 
-	go handleProgressUpdates(progressChan, progressBar, rollbackFilesMenu, form, app)
+	go handleProgressUpdates(progressChan, progressBar, rollbackFilesMenu, form, mockApp)
 
 	// Simulate progress updates
 	progressChan <- 50
@@ -140,9 +128,18 @@ func TestHandleProgressUpdates(t *testing.T) {
 
 	// Wait for the goroutine to finish
 	time.Sleep(100 * time.Millisecond)
-
-	// Останавливаем приложение
-	app.Stop()
-
 	assert.Equal(t, 100, progressBar.current, "Expected progress to be 100", "Expected form to have a button with text 'OK'")
+}
+
+type MockApplication struct {
+	*tview.Application
+}
+
+func (m *MockApplication) QueueUpdateDraw(t func()) *tview.Application {
+	t()
+	return m.Application
+}
+
+func (m *MockApplication) Draw() *tview.Application {
+	return m.Application
 }
