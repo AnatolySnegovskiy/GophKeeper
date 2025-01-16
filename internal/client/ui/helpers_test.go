@@ -94,15 +94,17 @@ func getDownloadStreaming(content []byte, status v1.Status) *MockDownloadFileCli
 
 	callCount := 0
 	return &MockDownloadFileClient{
+		callCount: 3,
 		recvFunc: func() (*v1.DownloadFileResponse, error) {
 			callCount++
 			if callCount == 1 {
 				// Первый вызов возвращает nonce (первые 12 байт из файла)
 				return &v1.DownloadFileResponse{
-					Status: status,
+					Status: v1.Status_STATUS_PROCESSING,
 					Data:   content[:12],
 				}, nil
 			}
+
 			if callCount-2 < len(chunks) {
 				// Возвращаем чанки данных
 				return &v1.DownloadFileResponse{
@@ -110,9 +112,10 @@ func getDownloadStreaming(content []byte, status v1.Status) *MockDownloadFileCli
 					Data:   chunks[callCount-2],
 				}, nil
 			}
+
 			// Последний вызов возвращает успешный статус
 			return &v1.DownloadFileResponse{
-				Status: v1.Status_STATUS_SUCCESS,
+				Status: status,
 			}, io.EOF
 		},
 		ctx: context.Background(),

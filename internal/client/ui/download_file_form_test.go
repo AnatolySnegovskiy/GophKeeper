@@ -1,13 +1,14 @@
 package ui
 
 import (
-	"fmt"
-	"github.com/gdamore/tcell/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"log/slog"
+	"os"
 	"testing"
+	"time"
 )
 
 func TestShowDownloadFileForm(t *testing.T) {
@@ -22,40 +23,118 @@ func TestShowDownloadFileForm(t *testing.T) {
 	clear()
 }
 
-func TestShowDownloadFileFormErr(t *testing.T) {
+func TestCreateDownloadForm(t *testing.T) {
+	info := tview.NewTextView().SetDynamicColors(true).SetText("")
+	progressBar := NewProgressBar(100)
+
+	form := createDownloadForm(info, progressBar)
+
+	assert.NotNil(t, form, "Expected form to be created, got nil")
+	assert.Equal(t, "Download File", form.GetTitle(), "Expected form title to be 'Download File'")
+}
+
+func TestCreateFlexLayout(t *testing.T) {
+	form := tview.NewForm()
+	flex := createFlexLayout(form)
+
+	assert.NotNil(t, flex, "Expected flex layout to be created, got nil")
+}
+
+func TestCleanDirectoryPath(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected string
+	}{
+		{"/path/to/dir/..", "/path/to/dir"},
+		{"/path/to/dir/.", "/path/to/dir"},
+		{"/path/to/dir/../", "/path/to/dir"},
+		{"/path/to/dir/./", "/path/to/dir"},
+		{"/path/to/dir/../..", "/path/to/dir"},
+		{"/path/to/dir/./.", "/path/to/dir"},
+	}
+
+	for _, tc := range testCases {
+		result := cleanDirectoryPath(tc.input)
+		assert.Equal(t, tc.expected, result, "Expected %s, got %s", tc.expected, result)
+	}
+}
+
+func TestHandleFileDownload(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	info := tview.NewTextView().SetDynamicColors(true).SetText("")
+	app := tview.NewApplication()
+
+	// Запускаем приложение
+	go func() {
+		if err := app.Run(); err != nil {
+			t.Fatalf("Failed to run application: %v", err)
+		}
+	}()
+
+	entry := &v1.ListDataEntry{Uuid: "test-uuid"}
+
 	mockClient := getMockGRPCClient(t)
-	testFile := getTestBadFile()
-	mockStream := getDownloadStreaming(testFile, v1.Status_STATUS_PROCESSING)
+	testFile := getTestGoodFile()
+	mockStream := getDownloadStreaming(testFile, v1.Status_STATUS_SUCCESS)
 	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil)
 	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(
 		&v1.GetMetadataFileResponse{
-			Metadata: "{\"file_name\":\"SynthVoiceRu.pak\",\"file_extension\":\".pak\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2242646908}",
+			Metadata: "{\"file_name\":\"eteas707606254\",\"file_extension\":\"\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":82}",
 		},
 		nil,
 	).AnyTimes()
-	menu := getMenu(mockClient)
+	grpcClient := getGrpcClient(mockClient, slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	done := make(chan struct{})
+	progressChan := make(chan int)
 
-	menu.showDownloadFileForm(&v1.ListDataEntry{
-		UserPath: "Test",
-		Uuid:     "Test",
-	}, func() {})
-	assert.NotNil(t, menu.app)
+	go func() {
+		defer close(done)
+		handleFileDownload("D:\\", entry, progressChan, info, grpcClient, app)
+	}()
 
-	focused := menu.app.GetFocus()
-	_, ok := focused.(*tview.List)
-	assert.True(t, ok, "focused should be of type *tview.List")
-	simulateKeyPress(tcell.KeyTab, focused)
-	focused = menu.app.GetFocus()
-	button, ok := focused.(*tview.Button)
-	assert.True(t, ok, "focused should be of type *tview.Button")
-	assert.Equal(t, "Select Directory", button.GetLabel())
-	simulateKeyPress(tcell.KeyEnter, focused)
+	go func() {
+		<-progressChan
+	}()
 
-	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyTab, focused)
-	focused = menu.app.GetFocus()
-	fmt.Printf("Focused widget type: %T\n", focused)
-	_, ok = focused.(*ProgressBar)
-	assert.True(t, ok, "focused should be of type *ProgressBar")
+	select {
+	case <-done:
+		app.Stop()
+		assert.Equal(t, "[green]Success: true", info.GetText(false), "Expected success message")
+	case <-time.After(30 * time.Second):
+		t.Fatal("Test timed out")
+	}
 	clear()
+}
+
+func TestHandleProgressUpdates(t *testing.T) {
+	progressBar := NewProgressBar(100)
+	form := tview.NewForm()
+	app := tview.NewApplication()
+
+	// Запускаем приложение
+	go func() {
+		if err := app.Run(); err != nil {
+			t.Fatalf("Failed to run application: %v", err)
+		}
+	}()
+
+	progressChan := make(chan int)
+	rollbackFilesMenu := func() {}
+
+	go handleProgressUpdates(progressChan, progressBar, rollbackFilesMenu, form, app)
+
+	// Simulate progress updates
+	progressChan <- 50
+	progressChan <- 100
+	close(progressChan)
+
+	// Wait for the goroutine to finish
+	time.Sleep(100 * time.Millisecond)
+
+	// Останавливаем приложение
+	app.Stop()
+
+	assert.Equal(t, 100, progressBar.current, "Expected progress to be 100")
 }

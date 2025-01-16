@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/rivo/tview"
+	"goph_keeper/internal/client"
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"os"
 	"path/filepath"
-	"strings"
+	"regexp"
 )
 
 func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry, rollbackFilesMenu func()) {
@@ -22,62 +23,76 @@ func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry, rollbackFilesMenu f
 			return
 		}
 
-		form := tview.NewForm().
-			AddFormItem(info).
-			AddFormItem(progressBar)
-		form.SetBorder(true).SetTitle("Download File").SetTitleAlign(tview.AlignLeft)
-		flex := tview.NewFlex().
-			SetDirection(tview.FlexRow).
-			AddItem(form, 0, 1, true)
-
-		m.app.SetRoot(flex, true)
+		form := createDownloadForm(info, progressBar)
+		m.app.SetRoot(createFlexLayout(form), true)
 
 		progressChan := make(chan int)
 
-		go func() {
-			suffixes := []string{"..", ".", "/..", "/.", "/../", "/./"}
-
-			for _, suffix := range suffixes {
-				directoryPath = strings.TrimSuffix(directoryPath, suffix)
-			}
-
-			fileInfo, err := os.Stat(directoryPath)
-			if err != nil {
-				m.app.QueueUpdateDraw(func() {
-					info.SetText(fmt.Sprintf("[red]Error: %s", err))
-				})
-				return
-			}
-
-			if !fileInfo.IsDir() {
-				directoryPath = filepath.Dir(directoryPath)
-			}
-
-			_, err = m.grpcClient.DownloadFile(context.Background(), entry.Uuid, directoryPath, progressChan)
-			if err != nil {
-				m.app.QueueUpdateDraw(func() {
-					info.SetText(fmt.Sprintf("[red]Error: %s", err))
-				})
-			}
-			close(progressChan)
-			m.app.QueueUpdateDraw(func() {
-				info.SetText(fmt.Sprintf("[green]Success: %t", true))
-			})
-		}()
-
-		go func() {
-			for progress := range progressChan {
-				m.app.QueueUpdateDraw(func() {
-					progressBar.SetProgress(progress)
-				})
-			}
-			if progressBar.current >= 100 {
-				form.AddButton("OK", func() {
-					rollbackFilesMenu()
-				})
-			}
-		}()
+		go handleFileDownload(directoryPath, entry, progressChan, info, m.grpcClient, m.app)
+		go handleProgressUpdates(progressChan, progressBar, rollbackFilesMenu, form, m.app)
 	}
 
 	m.explore(Dir, f)
+}
+
+func createDownloadForm(info *tview.TextView, progressBar *ProgressBar) *tview.Form {
+	form := tview.NewForm().
+		AddFormItem(info).
+		AddFormItem(progressBar)
+	form.SetBorder(true).SetTitle("Download File").SetTitleAlign(tview.AlignLeft)
+	return form
+}
+
+func createFlexLayout(form *tview.Form) *tview.Flex {
+	return tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 1, true)
+}
+
+func handleFileDownload(directoryPath string, entry *v1.ListDataEntry, progressChan chan int, info *tview.TextView, grpcClient *client.GrpcClient, app *tview.Application) {
+	directoryPath = cleanDirectoryPath(directoryPath)
+
+	fileInfo, err := os.Stat(directoryPath)
+	if err != nil {
+		app.QueueUpdateDraw(func() {
+			info.SetText(fmt.Sprintf("[red]Error: %s", err))
+		})
+		return
+	}
+
+	if !fileInfo.IsDir() {
+		directoryPath = filepath.Dir(directoryPath)
+	}
+
+	_, err = grpcClient.DownloadFile(context.Background(), entry.Uuid, directoryPath, progressChan)
+	fmt.Printf("directoryPath: %s\n", directoryPath)
+	if err != nil {
+		app.QueueUpdateDraw(func() {
+			info.SetText(fmt.Sprintf("[red]Error: %s", err))
+		})
+	}
+	close(progressChan)
+	app.QueueUpdateDraw(func() {
+		info.SetText(fmt.Sprintf("[green]Success: %t", true))
+	})
+}
+
+func cleanDirectoryPath(directoryPath string) string {
+	re := regexp.MustCompile(`[./]+$`)
+	cleanedPath := re.ReplaceAllString(directoryPath, "")
+
+	return cleanedPath
+}
+
+func handleProgressUpdates(progressChan chan int, progressBar *ProgressBar, rollbackFilesMenu func(), form *tview.Form, app *tview.Application) {
+	for progress := range progressChan {
+		app.QueueUpdateDraw(func() {
+			progressBar.SetProgress(progress)
+		})
+	}
+	if progressBar.current >= 100 {
+		form.AddButton("OK", func() {
+			rollbackFilesMenu()
+		})
+	}
 }
