@@ -61,9 +61,13 @@ func TestExploreDir(t *testing.T) {
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "/", currentItemName)
 	simulateKeyPress(tcell.KeyEnter, focused)
+	simulateKeyPress(tcell.KeyDown, focused)
+	simulateKeyPress(tcell.KeyEnter, focused)
 	simulateKeyPress(tcell.KeyLeft, focused)
 	simulateKeyPress(tcell.KeyRight, focused)
 	simulateKeyPress(tcell.KeyEnter, focused)
+	simulateKeyPress(tcell.KeyEnter, focused)
+	simulateKeyPress(tcell.KeyPgUp, focused)
 	simulateKeyPress(tcell.KeyEnter, focused)
 }
 
