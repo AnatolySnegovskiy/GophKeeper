@@ -20,19 +20,3 @@ services:
       - REDIS_USER_PASSWORD=${REDIS_USER_PASSWORD}
     ports:
       - "6379:6379"
-  goph-keeper:
-    build:
-      context: .
-      dockerfile: ./docker/goph_keeper
-    container_name: server
-    volumes:
-      - ./config:/root/config
-    env_file: .env
-    ports:
-      - 8080:8080
-    depends_on:
-      - app-db
-    links:
-      - app-db
-      - redis
-    command: sh -c "until nc -z app-db ${APP_PG_PORT}; do sleep 1; done && until nc -z redis_container 6379; do sleep 1; done && ./server"

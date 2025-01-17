@@ -41,10 +41,7 @@ func (m *Menu) showSendFileForm() {
 				userPath = "/" + userPath
 			}
 
-			if strings.HasSuffix(userPath, "/") {
-				userPath = strings.TrimSuffix(userPath, "/")
-			}
-
+			userPath = strings.TrimSuffix(userPath, "/")
 			progressChan := make(chan int)
 
 			go func() {

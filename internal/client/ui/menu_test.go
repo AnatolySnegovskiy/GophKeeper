@@ -8,7 +8,7 @@ import (
 	"goph_keeper/internal/client"
 	"log/slog"
 	"os"
-	"runtime"
+	runtime "runtime"
 	"testing"
 )
 
@@ -80,5 +80,53 @@ func TestIsDriveRoot(t *testing.T) {
 			continue
 		}
 		assert.Equal(t, tc.result, isDriveRoot(tc.path), tc.path)
+	}
+}
+
+func TestIsRootPathGOOS(t *testing.T) {
+	// Сохраняем оригинальную функцию getGOOS
+	originalGetGOOS := GetGOOS
+	defer func() { GetGOOS = originalGetGOOS }()
+
+	// Тест для Windows
+	GetGOOS = func() string { return "windows" }
+	if !isRootPath("C:\\") {
+		t.Errorf("isRootPath(\"C:\\\") = false; want true")
+	}
+	if isRootPath("C:\\Windows") {
+		t.Errorf("isRootPath(\"C:\\Windows\") = true; want false")
+	}
+
+	// Тест для Unix
+	GetGOOS = func() string { return "linux" }
+	if !isRootPath("/") {
+		t.Errorf("isRootPath(\"/\") = false; want true")
+	}
+	if isRootPath("/home") {
+		t.Errorf("isRootPath(\"/home\") = true; want false")
+	}
+}
+
+func TestIsDriveRootGOOS(t *testing.T) {
+	// Сохраняем оригинальную функцию getGOOS
+	originalGetGOOS := GetGOOS
+	defer func() { GetGOOS = originalGetGOOS }()
+
+	// Тест для Windows
+	GetGOOS = func() string { return "windows" }
+	if !isDriveRoot("C:\\") {
+		t.Errorf("isDriveRoot(\"C:\\\") = false; want true")
+	}
+	if isDriveRoot("C:\\Windows") {
+		t.Errorf("isDriveRoot(\"C:\\Windows\") = true; want false")
+	}
+
+	// Тест для Unix
+	GetGOOS = func() string { return "linux" }
+	if isDriveRoot("/") {
+		t.Errorf("isDriveRoot(\"/\") = true; want false")
+	}
+	if isDriveRoot("/home") {
+		t.Errorf("isDriveRoot(\"/home\") = true; want false")
 	}
 }
