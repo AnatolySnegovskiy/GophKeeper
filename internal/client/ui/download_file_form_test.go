@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/golang/mock/gomock"
@@ -114,7 +115,8 @@ func TestHandleFileDownload(t *testing.T) {
 
 	go func() {
 		defer close(done)
-		handleFileDownload(os.TempDir(), entry, progressChan, info, grpcClient, mockApp)
+		file, _ := os.CreateTemp("", "test")
+		handleFileDownload(file.Name(), entry, progressChan, info, grpcClient, mockApp)
 	}()
 
 	// Wait for the progress to reach 100%
@@ -135,6 +137,55 @@ func TestHandleFileDownload(t *testing.T) {
 	case <-time.After(30 * time.Second):
 		t.Fatal("Test timed out")
 	}
+	clear()
+}
+
+func TestHandleFileDownloadErrorPath(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	info := tview.NewTextView().SetDynamicColors(true).SetText("")
+	mockApp := &MockApplication{
+		Application: tview.NewApplication(),
+	}
+
+	entry := &v1.ListDataEntry{Uuid: "test-uuid"}
+	mockClient := getMockGRPCClient(t)
+	grpcClient := getGrpcClient(mockClient, slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	progressChan := make(chan int)
+	handleFileDownload("", entry, progressChan, info, grpcClient, mockApp)
+	mockApp.QueueUpdateDraw(func() {
+		assert.Equal(t, "[red]Error: Stat : The system cannot find the path specified.", info.GetText(false), "Expected error message")
+	})
+	clear()
+}
+
+func TestHandleFileDownloadError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	info := tview.NewTextView().SetDynamicColors(true).SetText("")
+	mockApp := &MockApplication{
+		Application: tview.NewApplication(),
+	}
+
+	entry := &v1.ListDataEntry{Uuid: "test-uuid"}
+	mockClient := getMockGRPCClient(t)
+	grpcClient := getGrpcClient(mockClient, slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(
+		nil,
+		errors.New("test error"),
+	).AnyTimes()
+	progressChan := make(chan int)
+	handleFileDownload(os.TempDir(), entry, progressChan, info, grpcClient, mockApp)
+	mockApp.QueueUpdateDraw(func() {
+		assert.Equal(
+			t,
+			"[red]Error: test error",
+			info.GetText(false),
+			"Expected error message",
+		)
+	})
 	clear()
 }
 

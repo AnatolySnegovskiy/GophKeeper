@@ -71,11 +71,11 @@ func handleFileDownload(directoryPath string, entry *v1.ListDataEntry, progressC
 	}
 
 	_, err = grpcClient.DownloadFile(context.Background(), entry.Uuid, directoryPath, progressChan)
-	fmt.Printf("directoryPath: %s\n", directoryPath)
 	if err != nil {
 		app.QueueUpdateDraw(func() {
 			info.SetText(fmt.Sprintf("[red]Error: %s", err))
 		})
+		return
 	}
 	close(progressChan)
 	app.QueueUpdateDraw(func() {
