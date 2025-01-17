@@ -63,12 +63,19 @@ func TestExploreDir(t *testing.T) {
 	simulateKeyPress(tcell.KeyEnter, focused)
 	simulateKeyPress(tcell.KeyDown, focused)
 	simulateKeyPress(tcell.KeyEnter, focused)
+	simulateKeyPress(tcell.KeyEnter, focused)
+	simulateKeyPress(tcell.KeyDown, focused)
+	simulateKeyPress(tcell.KeyEnter, focused)
 	simulateKeyPress(tcell.KeyLeft, focused)
 	simulateKeyPress(tcell.KeyRight, focused)
 	simulateKeyPress(tcell.KeyEnter, focused)
 	simulateKeyPress(tcell.KeyEnter, focused)
 	simulateKeyPress(tcell.KeyPgUp, focused)
 	simulateKeyPress(tcell.KeyEnter, focused)
+
+	for i := 0; i < 50; i++ {
+		simulateKeyPress(tcell.KeyEnter, focused)
+	}
 }
 
 func TestShowDirectoryContents(t *testing.T) {
