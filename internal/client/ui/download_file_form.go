@@ -24,14 +24,8 @@ func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry, rollbackFilesMenu f
 		SetText("")
 
 	f := func(directoryPath string, rollback func()) {
-		if directoryPath == "" {
-			info.SetText("Directory Path cannot be empty")
-			return
-		}
-
 		form := createDownloadForm(info, progressBar)
 		m.app.SetRoot(createFlexLayout(form), true)
-
 		progressChan := make(chan int)
 
 		go handleFileDownload(directoryPath, entry, progressChan, info, m.grpcClient, m.app)
