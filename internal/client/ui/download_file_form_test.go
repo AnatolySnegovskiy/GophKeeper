@@ -161,6 +161,11 @@ func TestHandleProgressUpdates(t *testing.T) {
 
 	assert.Equal(t, 100, progressBar.current, "Expected progress to be 100")
 	assert.Equal(t, 100, progressBar.current, "Expected progress to be 100", "Expected form to have a button with text 'OK'")
+	button := form.GetButton(0)
+	assert.NotNil(t, button, "Expected form to have a button with text 'OK'")
+	assert.Equal(t, "OK", button.GetLabel(), "Expected form to have a button with text 'OK'")
+	form.SetFocus(0)
+	simulateKeyPress(tcell.KeyEnter, button)
 }
 
 type MockApplication struct {
