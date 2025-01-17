@@ -153,9 +153,9 @@ func TestHandleFileDownloadErrorPath(t *testing.T) {
 	mockClient := getMockGRPCClient(t)
 	grpcClient := getGrpcClient(mockClient, slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 	progressChan := make(chan int)
-	handleFileDownload("", entry, progressChan, info, grpcClient, mockApp)
+	handleFileDownload(os.TempDir()+"/invalid_path", entry, progressChan, info, grpcClient, mockApp)
 	mockApp.QueueUpdateDraw(func() {
-		assert.Equal(t, "[red]Error: Stat : The system cannot find the path specified.", info.GetText(false), "Expected error message")
+		assert.Equal(t, "[red]Error: CreateFile "+os.TempDir()+"/invalid_path: The system cannot find the file specified.", info.GetText(false), "Expected error message")
 	})
 	clear()
 }
