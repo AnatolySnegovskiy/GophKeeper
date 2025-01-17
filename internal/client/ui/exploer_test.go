@@ -51,6 +51,7 @@ func TestExploreDir(t *testing.T) {
 	}
 	callback := func(filePath string, rollback func()) {
 		assert.True(t, true)
+		rollback()
 	}
 	menu.explore(Dir, callback)
 	focused := menu.app.GetFocus()
