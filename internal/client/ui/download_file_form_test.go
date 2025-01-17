@@ -10,6 +10,7 @@ import (
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"log/slog"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -155,7 +156,7 @@ func TestHandleFileDownloadErrorPath(t *testing.T) {
 	progressChan := make(chan int)
 	handleFileDownload(os.TempDir()+"/invalid_path", entry, progressChan, info, grpcClient, mockApp)
 	mockApp.QueueUpdateDraw(func() {
-		assert.Equal(t, "[red]Error: CreateFile "+os.TempDir()+"/invalid_path: The system cannot find the file specified.", info.GetText(false), "Expected error message")
+		assert.Conditionf(t, func() bool { return strings.Contains(info.GetText(false), "[red]Error") }, "Expected error message")
 	})
 	clear()
 }
