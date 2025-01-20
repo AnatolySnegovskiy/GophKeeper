@@ -149,7 +149,6 @@ func TestShowPasswordForm(t *testing.T) {
 	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected showPasswordMenu to be called after submitting")
 
-	// Test the "Cancel" button logic
 	menu.showPasswordForm(filePassword)
 	focused = menu.app.GetFocus()
 	for i := 0; i < 5; i++ {
