@@ -138,7 +138,7 @@ func TestShowPasswordForm(t *testing.T) {
 	assert.Equal(t, "Test Description2", filePassword.Description, "expected Description to be updated")
 	assert.Equal(t, "testlogin2", filePassword.Login, "expected Login to be updated")
 	assert.Equal(t, "testpassword2", filePassword.Password, "expected Password to be updated")
-	
+
 	menu.showPasswordForm(filePassword)
 	focused = menu.app.GetFocus()
 	for i := 0; i < 4; i++ {

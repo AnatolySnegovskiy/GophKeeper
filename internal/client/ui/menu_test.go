@@ -8,7 +8,6 @@ import (
 	"goph_keeper/internal/client"
 	"log/slog"
 	"os"
-	runtime "runtime"
 	"testing"
 )
 
@@ -53,8 +52,8 @@ func TestIsRootPath(t *testing.T) {
 		{os: "linux", path: "/home", result: false},
 	}
 
+	currentOS := GetGOOS()
 	for _, tc := range testCases {
-		currentOS := runtime.GOOS
 		if currentOS != tc.os {
 			continue
 		}
@@ -74,8 +73,8 @@ func TestIsDriveRoot(t *testing.T) {
 		{os: "linux", path: "/home", result: false},
 	}
 
+	currentOS := GetGOOS()
 	for _, tc := range testCases {
-		currentOS := runtime.GOOS
 		if currentOS != tc.os {
 			continue
 		}
