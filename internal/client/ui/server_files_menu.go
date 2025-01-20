@@ -22,6 +22,7 @@ func (m *Menu) showServerFilesMenu(currentPath string) {
 		m.errorHandler(err, func() {
 			m.showServerFilesMenu(currentPath)
 		})
+		return
 	}
 
 	vDirectories := buildVirtualDirectories(listFiles.Entries)
