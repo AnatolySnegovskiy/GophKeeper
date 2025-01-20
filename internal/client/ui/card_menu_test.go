@@ -35,6 +35,7 @@ func TestShowCardForm(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	mockClient := getMockGRPCClient(t)
+	mockClient.EXPECT().DeleteFile(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{
 			{UserPath: "path/to/card1", Uuid: "uuid1"},
@@ -60,6 +61,7 @@ func TestShowCardForm(t *testing.T) {
 	menu := getMenu(mockClient)
 
 	fileCard := &entities.FileCard{
+		Uuid:        "uuid",
 		CardName:    "Test Card",
 		Description: "Test Description",
 		CardNumber:  "1234567890123456",
@@ -150,6 +152,64 @@ func TestShowCardForm(t *testing.T) {
 	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected showCardsMenu to be called after canceling")
 	clear()
+}
+
+func TestDeleteCardErr(t *testing.T) {
+	mockClient := getMockGRPCClient(t)
+	mockClient.EXPECT().DeleteFile(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
+	fileCard := &entities.FileCard{
+		Uuid:        "uuid",
+		CardName:    "Test Card",
+		Description: "Test Description",
+		CardNumber:  "1234567890123456",
+		ExpiryDate:  "12/25",
+		CVV:         "123",
+		CardHolder:  "Test Holder",
+	}
+
+	menu := getMenu(mockClient)
+	menu.showCardForm(fileCard)
+	focused := menu.app.GetFocus()
+	for i := 0; i < 6; i++ {
+		simulateKeyPress(tcell.KeyTab, focused)
+	}
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	InputField, ok := focused.(*tview.InputField)
+	assert.True(t, ok, "focused should be of type *tview.InputField")
+	assert.NotNil(t, InputField, "list should not be nil")
+}
+
+func TestUploadCardErr(t *testing.T) {
+	mockClient := getMockGRPCClient(t)
+	mockClient.EXPECT().DeleteFile(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+	mockClient.EXPECT().UploadFile(gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
+	fileCard := &entities.FileCard{
+		Uuid:        "uuid",
+		CardName:    "Test Card",
+		Description: "Test Description",
+		CardNumber:  "1234567890123456",
+		ExpiryDate:  "12/25",
+		CVV:         "123",
+		CardHolder:  "Test Holder",
+	}
+	menu := getMenu(mockClient)
+	menu.showCardForm(fileCard)
+	focused := menu.app.GetFocus()
+	for i := 0; i < 6; i++ {
+		simulateKeyPress(tcell.KeyTab, focused)
+	}
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	InputField, ok := focused.(*tview.InputField)
+	assert.True(t, ok, "focused should be of type *tview.InputField")
+	assert.NotNil(t, InputField, "list should not be nil")
 }
 
 func TestErrGetStoreDataList(t *testing.T) {

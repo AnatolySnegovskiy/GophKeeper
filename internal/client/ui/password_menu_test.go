@@ -89,6 +89,7 @@ func TestShowPasswordForm(t *testing.T) {
 
 	menu := getMenu(mockClient)
 	filePassword := &entities.FilePassword{
+		Uuid:        "uuid",
 		Title:       "Test Password",
 		Description: "Test Description",
 		Login:       "testlogin",
@@ -156,7 +157,61 @@ func TestShowPasswordForm(t *testing.T) {
 	focused = menu.app.GetFocus()
 	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected showPasswordMenu to be called after canceling")
+
 	clear()
+}
+
+func TestDeleteErr(t *testing.T) {
+	mockClient := getMockGRPCClient(t)
+	mockClient.EXPECT().DeleteFile(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
+	filePassword := &entities.FilePassword{
+		Uuid:        "uuid",
+		Title:       "Test Password",
+		Description: "Test Description",
+		Login:       "testlogin",
+		Password:    "testpassword",
+	}
+	menu := getMenu(mockClient)
+	menu.showPasswordForm(filePassword)
+	focused := menu.app.GetFocus()
+	for i := 0; i < 4; i++ {
+		simulateKeyPress(tcell.KeyTab, focused)
+	}
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	InputField, ok := focused.(*tview.InputField)
+	assert.True(t, ok, "focused should be of type *tview.InputField")
+	assert.NotNil(t, InputField, "list should not be nil")
+}
+
+func TestUploadErr(t *testing.T) {
+	mockClient := getMockGRPCClient(t)
+	mockClient.EXPECT().DeleteFile(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
+	mockClient.EXPECT().UploadFile(gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
+	filePassword := &entities.FilePassword{
+		Uuid:        "uuid",
+		Title:       "Test Password",
+		Description: "Test Description",
+		Login:       "testlogin",
+		Password:    "testpassword",
+	}
+	menu := getMenu(mockClient)
+	menu.showPasswordForm(filePassword)
+	focused := menu.app.GetFocus()
+	for i := 0; i < 4; i++ {
+		simulateKeyPress(tcell.KeyTab, focused)
+	}
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	simulateKeyPress(tcell.KeyEnter, focused)
+	focused = menu.app.GetFocus()
+	InputField, ok := focused.(*tview.InputField)
+	assert.True(t, ok, "focused should be of type *tview.InputField")
+	assert.NotNil(t, InputField, "list should not be nil")
 }
 
 func TestErrGetStoreDataListPassword(t *testing.T) {
@@ -224,7 +279,7 @@ func TestErrFromFilePassword(t *testing.T) {
 	mockStream := getDownloadStreaming(testFile, v1.Status_STATUS_PROCESSING)
 	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil)
 	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(&v1.GetMetadataFileResponse{
-		Metadata: "metadata",
+		Metadata: "{\"file_name\":\"SynthVoiceRu.pak\",\"file_extension\":\".pak\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2242646908}",
 	}, nil).AnyTimes()
 
 	menu := getMenu(mockClient)
@@ -317,5 +372,21 @@ func TestBackPaswword(t *testing.T) {
 	assert.NotNil(t, list, "list should not be nil")
 	currentItemName, _ = list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "1. Файлы", currentItemName)
+	clear()
+}
+
+func TestErrorGetStoreDataList(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockClient := getMockGRPCClient(t)
+	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
+	menu := getMenu(mockClient)
+	menu.showPasswordMenu()
+	focused := menu.app.GetFocus()
+	button, ok := focused.(*tview.Button)
+	assert.True(t, ok, "focused should be of type *tview.button")
+	assert.Equal(t, "OK", button.GetLabel())
+	simulateKeyPress(tcell.KeyEnter, focused)
 	clear()
 }
