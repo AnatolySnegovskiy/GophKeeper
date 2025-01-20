@@ -11,10 +11,10 @@ package mocks
 
 import (
 	context "context"
-	gomock "github.com/golang/mock/gomock"
-	grpc "google.golang.org/grpc"
+	"github.com/golang/mock/gomock"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	reflect "reflect"
+	grpc "google.golang.org/grpc"
 )
 
 // MockGophKeeperV1ServiceClient is a mock of GophKeeperV1ServiceClient interface.

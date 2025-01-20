@@ -6,7 +6,6 @@ import (
 	"github.com/rivo/tview"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
 
@@ -30,7 +29,7 @@ func (m *Menu) explore(typeSelection TypeSelection, callback func(filePath strin
 		typeSelection: typeSelection,
 	}
 	getDrives := func() []string {
-		if runtime.GOOS != "windows" {
+		if GetGOOS() != "windows" {
 			return []string{"/"}
 		}
 		var drives []string
