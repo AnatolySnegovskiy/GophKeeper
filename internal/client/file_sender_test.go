@@ -76,10 +76,13 @@ func TestSendFile(t *testing.T) {
 	// Тест: успешная отправка файла
 	t.Run("Successful file send", func(t *testing.T) {
 		done := make(chan struct{})
+		progressChan := make(chan int, 100)
+
 		go func() {
 			defer close(done)
 			err := client.sendFile(mockStream, metadata, tempFile.Name(), progressChan)
 			assert.NoError(t, err)
+
 		}()
 		assert.Equal(t, 100, <-progressChan)
 		close(progressChan)
