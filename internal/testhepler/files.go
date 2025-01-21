@@ -1,4 +1,4 @@
-package ui
+package testhepler
 
 import (
 	"context"
@@ -19,7 +19,6 @@ import (
 )
 
 // MockDownloadFileClient - мок для интерфейса grpc.ServerStreamingClient[v1.DownloadFileResponse]
-// MockDownloadFileClient - мок для интерфейса grpc.ServerStreamingClient[v1.DownloadFileResponse]
 type MockDownloadFileClient struct {
 	grpc.ServerStreamingClient[v1.DownloadFileResponse]
 	recvFunc  func() (*v1.DownloadFileResponse, error)
@@ -35,7 +34,7 @@ func (m *MockDownloadFileClient) Recv() (*v1.DownloadFileResponse, error) {
 
 var login = "TEST"
 
-func getMockGRPCClient(t *testing.T) *mocks.MockGophKeeperV1ServiceClient {
+func GetMockGRPCClient(t *testing.T) *mocks.MockGophKeeperV1ServiceClient {
 	ssh := services.NewSshKeyGen()
 	publicKey, _ := ssh.Generate(login)
 	randomToken := strconv.Itoa(10)
@@ -54,34 +53,24 @@ func getMockGRPCClient(t *testing.T) *mocks.MockGophKeeperV1ServiceClient {
 	return mockClient
 }
 
-func getGrpcClient(mockClient v1.GophKeeperV1ServiceClient, logger *slog.Logger) *client.GrpcClient {
+func GetGrpcClient(mockClient v1.GophKeeperV1ServiceClient, logger *slog.Logger) *client.GrpcClient {
 	grpcClient := client.NewGrpcClient(logger, mockClient)
 	_, _ = grpcClient.Authenticate(context.Background(), login, "123")
 
 	return grpcClient
 }
 
-func getMenu(mockClient v1.GophKeeperV1ServiceClient) *Menu {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	return &Menu{
-		app:        tview.NewApplication(),
-		title:      "Test Title",
-		grpcClient: getGrpcClient(mockClient, logger),
-		logger:     logger,
-	}
-}
-
-func clear() {
+func Clear() {
 	os.RemoveAll("./.ssh/")
 }
 
-func simulateKeyPress(key tcell.Key, primitive tview.Primitive) {
+func SimulateKeyPress(key tcell.Key, primitive tview.Primitive) {
 	handler := primitive.InputHandler()
 	event := tcell.NewEventKey(key, 0, 0)
 	handler(event, func(p tview.Primitive) {})
 }
 
-func getDownloadStreaming(content []byte, status v1.Status) *MockDownloadFileClient {
+func GetDownloadStreaming(content []byte, status v1.Status) *MockDownloadFileClient {
 	chunkSize := 1024 * 1024 // Размер чанка
 	chunks := make([][]byte, 0, len(content)/chunkSize+1)
 	for i := 12; i < len(content); i += chunkSize {
@@ -122,13 +111,13 @@ func getDownloadStreaming(content []byte, status v1.Status) *MockDownloadFileCli
 	}
 }
 
-func getTestGoodFile() []byte {
+func GetTestGoodFile() []byte {
 	hexString := "73c069125bf16669dd6be8ca8b87d24c4acb4b396467cb3e06a98e81ed5c0924f624d01a330d9cde23b64abecc368540529760a09f674295d49ab4128b97ea7f8446afbe6b9e96ab23c702cf84e124e42bad6e003dae7f6d939dd8407584"
 	byteSlice, _ := hex.DecodeString(hexString)
 	return byteSlice
 }
 
-func getTestBadFile() []byte {
+func GetTestBadFile() []byte {
 	hexString := "73c069125bf16669dd6be8ca8b87d24c4acb4b396467cb3e06a98e81ed5c0924f624d01a330d9cde23b64abecc368540529760a09f674295d49ab4128b97ea7f8446afbe6b9e96ab23c702cf84e124e42bad6e003dae7f6d939dd84075"
 	byteSlice, _ := hex.DecodeString(hexString)
 	return byteSlice

@@ -6,6 +6,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"goph_keeper/internal/testhepler"
 	"testing"
 )
 
@@ -20,14 +21,14 @@ func TestShowFilesMenu(t *testing.T) {
 }
 
 func TestSelectDownloadFile(t *testing.T) {
-	client := getMockGRPCClient(t)
+	client := testhepler.GetMockGRPCClient(t)
 	client.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{
 			{UserPath: "file1", Uuid: "uuid1"},
 			{UserPath: "file2", Uuid: "uuid2"},
 		},
 	}, nil).AnyTimes()
-	menu := getMenu(client)
+	menu := GetMenu(client)
 	menu.showFilesMenu()
 
 	focused := menu.app.GetFocus()
@@ -35,37 +36,37 @@ func TestSelectDownloadFile(t *testing.T) {
 	assert.True(t, ok, "focused should be of type *tview.List")
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "Download", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
-	clear()
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.Clear()
 }
 
 func TestSelectUploadFile(t *testing.T) {
-	client := getMockGRPCClient(t)
-	menu := getMenu(client)
+	client := testhepler.GetMockGRPCClient(t)
+	menu := GetMenu(client)
 	menu.showFilesMenu()
 
 	focused := menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
 	list, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "Upload", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
-	clear()
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.Clear()
 }
 
 func TestSelectBackFile(t *testing.T) {
-	client := getMockGRPCClient(t)
-	menu := getMenu(client)
+	client := testhepler.GetMockGRPCClient(t)
+	menu := GetMenu(client)
 	menu.showFilesMenu()
 
 	focused := menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyDown, focused)
-	simulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
 	list, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "Back", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
-	clear()
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.Clear()
 }

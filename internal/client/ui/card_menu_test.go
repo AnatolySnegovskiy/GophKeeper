@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"goph_keeper/internal/services/entities"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"goph_keeper/internal/testhepler"
 	"testing"
 )
 
@@ -34,7 +35,7 @@ func (m *MockUploadFileClient) CloseSend() error {
 func TestShowCardForm(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().DeleteFile(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{
@@ -58,7 +59,7 @@ func TestShowCardForm(t *testing.T) {
 		},
 	}
 	mockClient.EXPECT().UploadFile(gomock.Any()).Return(mockStream, nil).AnyTimes()
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 
 	fileCard := &entities.FileCard{
 		Uuid:        "uuid",
@@ -79,7 +80,7 @@ func TestShowCardForm(t *testing.T) {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
 
-	simulateKeyPress(tcell.KeyTab, focused)
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused)
 	focused = menu.app.GetFocus()
 	inputFormHandler = focused.InputHandler()
 	inputDescription := "2"
@@ -87,7 +88,7 @@ func TestShowCardForm(t *testing.T) {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
 
-	simulateKeyPress(tcell.KeyTab, focused)
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused)
 	focused = menu.app.GetFocus()
 	inputFormHandler = focused.InputHandler()
 	inputCardNumber := "2"
@@ -95,7 +96,7 @@ func TestShowCardForm(t *testing.T) {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
 
-	simulateKeyPress(tcell.KeyTab, focused)
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused)
 	focused = menu.app.GetFocus()
 	inputFormHandler = focused.InputHandler()
 	inputExpiryDate := "2"
@@ -103,7 +104,7 @@ func TestShowCardForm(t *testing.T) {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
 
-	simulateKeyPress(tcell.KeyTab, focused)
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused)
 	focused = menu.app.GetFocus()
 	inputFormHandler = focused.InputHandler()
 	inputCVV := "2"
@@ -111,7 +112,7 @@ func TestShowCardForm(t *testing.T) {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
 
-	simulateKeyPress(tcell.KeyTab, focused)
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused)
 	focused = menu.app.GetFocus()
 	inputFormHandler = focused.InputHandler()
 	inputCardHolder := "2"
@@ -119,9 +120,9 @@ func TestShowCardForm(t *testing.T) {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
 
-	simulateKeyPress(tcell.KeyTab, focused)
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused)
 	// Simulate submitting the form
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected showCardsMenu to be called")
 
 	// Verify that the fileCard fields were updated correctly
@@ -136,26 +137,26 @@ func TestShowCardForm(t *testing.T) {
 	menu.showCardForm(fileCard)
 	focused = menu.app.GetFocus()
 	for i := 0; i < 6; i++ {
-		simulateKeyPress(tcell.KeyTab, focused)
+		testhepler.SimulateKeyPress(tcell.KeyTab, focused)
 	}
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected showCardsMenu to be called after submitting")
 
 	// Test the "Cancel" button logic
 	menu.showCardForm(fileCard)
 	focused = menu.app.GetFocus()
 	for i := 0; i < 7; i++ {
-		simulateKeyPress(tcell.KeyTab, focused)
+		testhepler.SimulateKeyPress(tcell.KeyTab, focused)
 	}
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected showCardsMenu to be called after canceling")
-	clear()
+	testhepler.Clear()
 }
 
 func TestDeleteCardErr(t *testing.T) {
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().DeleteFile(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
 	fileCard := &entities.FileCard{
 		Uuid:        "uuid",
@@ -167,16 +168,16 @@ func TestDeleteCardErr(t *testing.T) {
 		CardHolder:  "Test Holder",
 	}
 
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 	menu.showCardForm(fileCard)
 	focused := menu.app.GetFocus()
 	for i := 0; i < 6; i++ {
-		simulateKeyPress(tcell.KeyTab, focused)
+		testhepler.SimulateKeyPress(tcell.KeyTab, focused)
 	}
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
 	InputField, ok := focused.(*tview.InputField)
 	assert.True(t, ok, "focused should be of type *tview.InputField")
@@ -184,7 +185,7 @@ func TestDeleteCardErr(t *testing.T) {
 }
 
 func TestUploadCardErr(t *testing.T) {
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().DeleteFile(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 	mockClient.EXPECT().UploadFile(gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
 	fileCard := &entities.FileCard{
@@ -196,16 +197,16 @@ func TestUploadCardErr(t *testing.T) {
 		CVV:         "123",
 		CardHolder:  "Test Holder",
 	}
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 	menu.showCardForm(fileCard)
 	focused := menu.app.GetFocus()
 	for i := 0; i < 6; i++ {
-		simulateKeyPress(tcell.KeyTab, focused)
+		testhepler.SimulateKeyPress(tcell.KeyTab, focused)
 	}
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
 	InputField, ok := focused.(*tview.InputField)
 	assert.True(t, ok, "focused should be of type *tview.InputField")
@@ -215,23 +216,23 @@ func TestUploadCardErr(t *testing.T) {
 func TestErrGetStoreDataList(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 	menu.showCardsMenu()
 	focused := menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
 	list, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
 	assert.NotNil(t, list, "list should not be nil")
-	clear()
+	testhepler.Clear()
 }
 
 func TestErrDownloadFile(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{
 			{UserPath: "file1", Uuid: "uuid1"},
@@ -243,24 +244,24 @@ func TestErrDownloadFile(t *testing.T) {
 	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(&v1.GetMetadataFileResponse{
 		Metadata: "{\"file_name\":\"SynthVoiceRu.pak\",\"file_extension\":\".pak\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2242646908}",
 	}, nil).AnyTimes()
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 	menu.showCardsMenu()
 	focused := menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyDown, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
 	list, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
 	assert.NotNil(t, list, "list should not be nil")
-	clear()
+	testhepler.Clear()
 }
 
 func TestErrFromFile(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{
 			{UserPath: "file1", Uuid: "uuid1"},
@@ -271,28 +272,28 @@ func TestErrFromFile(t *testing.T) {
 		Metadata: "{\"file_name\":\"SynthVoiceRu.pak\",\"file_extension\":\".pak\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2242646908}",
 	}, nil).AnyTimes()
 	// Мок ответа для DownloadFile
-	testFile := getTestBadFile()
-	mockStream := getDownloadStreaming(testFile, v1.Status_STATUS_PROCESSING)
+	testFile := testhepler.GetTestBadFile()
+	mockStream := testhepler.GetDownloadStreaming(testFile, v1.Status_STATUS_PROCESSING)
 	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil)
 
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 	menu.showCardsMenu()
 	focused := menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyDown, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
 	list, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
 	assert.NotNil(t, list, "list should not be nil")
-	clear()
+	testhepler.Clear()
 }
 
 func TestGoodDownloadFile(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{
 			{UserPath: "file1", Uuid: "uuid1"},
@@ -303,67 +304,67 @@ func TestGoodDownloadFile(t *testing.T) {
 		Metadata: "{\"file_name\":\"SynthVoiceRu.pak\",\"file_extension\":\".pak\",\"mem_type\":\"application/octet-stream\",\"is_compressed\":false,\"compression_type\":\"\",\"file_size\":2242646908}",
 	}, nil).AnyTimes()
 	// Мок ответа для DownloadFile
-	testFile := getTestGoodFile()
-	mockStream := getDownloadStreaming(testFile, v1.Status_STATUS_PROCESSING)
+	testFile := testhepler.GetTestGoodFile()
+	mockStream := testhepler.GetDownloadStreaming(testFile, v1.Status_STATUS_PROCESSING)
 	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil)
 
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 	menu.showCardsMenu()
 	focused := menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyDown, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
 	input, ok := focused.(*tview.InputField)
 	assert.True(t, ok, "focused should be of type *tview.InputField")
 	assert.NotNil(t, input, "list should not be nil")
-	clear()
+	testhepler.Clear()
 }
 
 func TestAddCard(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{},
 	}, nil).AnyTimes()
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 	menu.showCardsMenu()
 	focused := menu.app.GetFocus()
 	list, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "Add", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
 	input, ok := focused.(*tview.InputField)
 	assert.True(t, ok, "focused should be of type *tview.InputField")
 	assert.NotNil(t, input, "list should not be nil")
-	clear()
+	testhepler.Clear()
 }
 
 func TestBack(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{},
 	}, nil).AnyTimes()
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 	menu.showCardsMenu()
 	focused := menu.app.GetFocus()
 	list, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
-	simulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "Back", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
 	list, ok = focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
 	assert.NotNil(t, list, "list should not be nil")
 	currentItemName, _ = list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "1. Файлы", currentItemName)
-	clear()
+	testhepler.Clear()
 }

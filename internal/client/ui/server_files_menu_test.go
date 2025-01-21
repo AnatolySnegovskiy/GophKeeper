@@ -7,6 +7,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"goph_keeper/internal/testhepler"
 	"path/filepath"
 	"testing"
 )
@@ -23,38 +24,38 @@ func TestShowServerFilesMenu(t *testing.T) {
 		},
 	}
 
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: entries,
 	}, nil).AnyTimes()
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 
 	menu.showServerFilesMenu("Test")
 	assert.NotNil(t, menu.app)
 
 	focused := menu.app.GetFocus()
 	list, _ := focused.(*tview.List)
-	simulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "Back", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
 	list, _ = focused.(*tview.List)
 	currentItemName, _ = list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "Download", currentItemName)
-	clear()
+	testhepler.Clear()
 }
 
 func TestErrGetStoreDataListServerFilesMenu(t *testing.T) {
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(nil, errors.New("error")).AnyTimes()
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 	menu.showServerFilesMenu("Test")
 	assert.NotNil(t, menu.app)
 
 	focused := menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyEnter, focused)
-	clear()
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.Clear()
 }
 
 func TestBuildVirtualDirectories(t *testing.T) {
@@ -96,11 +97,11 @@ func TestShowVirtualDirectoryContents(t *testing.T) {
 			Uuid:     "Test2",
 		},
 	}
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: entries,
 	}, nil).AnyTimes()
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 	menu.showServerFilesMenu(string(filepath.Separator))
 
 	focused := menu.app.GetFocus()
@@ -110,33 +111,33 @@ func TestShowVirtualDirectoryContents(t *testing.T) {
 
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "..", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 
-	simulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
 	focused = menu.app.GetFocus()
 	list, _ = focused.(*tview.List)
 
 	currentItemName, _ = list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "Test2"+string(filepath.Separator), currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
-	simulateKeyPress(tcell.KeyUp, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyUp, focused)
 	focused = menu.app.GetFocus()
 	list, _ = focused.(*tview.List)
 	currentItemName, _ = list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "Test3", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 
 	// Simulate the modal dialog for file download
 
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyRight, focused)
+	testhepler.SimulateKeyPress(tcell.KeyRight, focused)
 	focused = menu.app.GetFocus()
 	button, _ := focused.(*tview.Button)
 	assert.NotNil(t, button)
 	assert.Equal(t, "No", button.GetLabel())
 
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 
 	// Verify that the menu returns to the previous state
 	focused = menu.app.GetFocus()
@@ -144,15 +145,15 @@ func TestShowVirtualDirectoryContents(t *testing.T) {
 	currentItemName, _ = list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "..", currentItemName)
 
-	simulateKeyPress(tcell.KeyDown, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
 	button, _ = focused.(*tview.Button)
 	assert.NotNil(t, button)
 	assert.Equal(t, "Yes", button.GetLabel())
-	simulateKeyPress(tcell.KeyEnter, focused)
-	clear()
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.Clear()
 }
 
 func TestShowVirtualDirectoryContentsBack(t *testing.T) {
@@ -166,27 +167,27 @@ func TestShowVirtualDirectoryContentsBack(t *testing.T) {
 			Uuid:     "Test2",
 		},
 	}
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: entries,
 	}, nil).AnyTimes()
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 	menu.showServerFilesMenu(string(filepath.Separator))
 
 	focused := menu.app.GetFocus()
 	list, _ := focused.(*tview.List)
 
 	// Simulate navigating through the menu
-	simulateKeyPress(tcell.KeyDown, focused)
-	simulateKeyPress(tcell.KeyDown, focused)
-	simulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "Back", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 
 	focused = menu.app.GetFocus()
 	list, _ = focused.(*tview.List)
 	currentItemName, _ = list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "Download", currentItemName)
-	clear()
+	testhepler.Clear()
 }

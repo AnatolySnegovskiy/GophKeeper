@@ -9,11 +9,13 @@ import (
 	passwordhash "github.com/vzglad-smerti/password_hash"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"goph_keeper/internal/server/services/jwt"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"io"
 	"log/slog"
 	"net"
 	"os"
@@ -167,4 +169,178 @@ func setupTestFiles(login string) (cleanup func(), err error) {
 	}
 
 	return cleanup, nil
+}
+
+func TestGrpcServer_SetMetadataFile(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mockRedis, _ := redismock.NewClientMock()
+	server := getServer(db, mockRedis)
+
+	ctx := context.Background()
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("user_id", "1"))
+
+	req := &v1.SetMetadataFileRequest{
+		Uuid:       "test_uuid",
+		DataType:   v1.DataType_DATA_TYPE_BINARY,
+		Metadata:   "test_metadata",
+		UserPath:   "test_user_path",
+		SizeChunks: 1024,
+	}
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"storages\" WHERE uuid = $1 ORDER BY \"storages\".\"id\" LIMIT $2")).
+		WithArgs("test_uuid", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "uuid", "user_path", "metadata"}).AddRow(1, "test_uuid", "test_user_path", "test_metadata"))
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE \"storages\" SET \"data_type\"=$1,\"metadata\"=$2,\"size_bytes_partition\"=$3,\"user_path\"=$4 WHERE \"id\" = $5")).
+		WithArgs(3, "test_metadata", 1024, "test_user_path", 1).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	resp, err := server.SetMetadataFile(ctx, req)
+	assert.NoError(t, err)
+	assert.Equal(t, true, resp.Success)
+}
+
+func TestGrpcServer_GetStoreDataList(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mockRedis, _ := redismock.NewClientMock()
+	server := getServer(db, mockRedis)
+
+	ctx := context.Background()
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("user_id", "1"))
+
+	req := &v1.GetStoreDataListRequest{
+		DataType: v1.DataType_DATA_TYPE_BINARY,
+	}
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"storages\" WHERE user_id = $1 AND data_type = $2")).
+		WithArgs(1, v1.DataType_DATA_TYPE_BINARY).
+		WillReturnRows(sqlmock.NewRows([]string{"uuid", "user_path", "metadata"}).
+			AddRow("test_uuid", "test_user_path", "{\"FileName\":\"test_file.txt\"}"))
+
+	resp, err := server.GetStoreDataList(ctx, req)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(resp.Entries))
+	assert.Equal(t, "test_uuid", resp.Entries[0].Uuid)
+	assert.Equal(t, "test_user_path/", resp.Entries[0].UserPath)
+}
+
+func TestGrpcServer_DownloadFile(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mockRedis, _ := redismock.NewClientMock()
+	server := getServer(db, mockRedis)
+
+	ctx := context.Background()
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("user_id", "1"))
+
+	req := &v1.DownloadFileRequest{
+		Uuid: "test_uuid",
+	}
+	file, _ := os.CreateTemp("", "test_file")
+	file.Write([]byte("test_content"))
+	file.Close()
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"storages\" WHERE user_id = $1 AND uuid = $2 ORDER BY \"storages\".\"id\" LIMIT $3")).
+		WithArgs(1, "test_uuid", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "uuid", "user_path", "metadata", "path"}).AddRow(1, "test_uuid", "test_user_path", "test_metadata", file.Name()))
+
+	stream := &mockDownloadFileServer{}
+	stream.ctx = ctx
+	server.DownloadFile(req, stream)
+
+	resp := stream.resp
+	assert.NotNil(t, resp)
+	assert.Equal(t, v1.Status_STATUS_SUCCESS, resp.Status)
+}
+
+type mockDownloadFileServer struct {
+	grpc.ServerStream
+	ctx  context.Context
+	resp *v1.DownloadFileResponse
+}
+
+func (m *mockDownloadFileServer) Context() context.Context {
+	return m.ctx
+}
+
+func (m *mockDownloadFileServer) Send(resp *v1.DownloadFileResponse) error {
+	m.resp = resp
+	return nil
+}
+
+func (m *mockDownloadFileServer) Recv() (*v1.DownloadFileRequest, error) {
+	return nil, io.EOF
+}
+
+func TestGrpcServer_GetMetadataFile(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mockRedis, _ := redismock.NewClientMock()
+	server := getServer(db, mockRedis)
+
+	ctx := context.Background()
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("user_id", "1"))
+
+	req := &v1.GetMetadataFileRequest{
+		Uuid: "test_uuid",
+	}
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"storages\" WHERE user_id = $1 AND uuid = $2 ORDER BY \"storages\".\"id\" LIMIT $3")).
+		WithArgs(1, "test_uuid", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"metadata"}).
+			AddRow("test_metadata"))
+
+	resp, err := server.GetMetadataFile(ctx, req)
+	assert.NoError(t, err)
+	assert.Equal(t, "test_metadata", resp.Metadata)
+}
+
+func TestGrpcServer_DeleteFile(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mockRedis, _ := redismock.NewClientMock()
+	server := getServer(db, mockRedis)
+
+	ctx := context.Background()
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("user_id", "1"))
+
+	req := &v1.DeleteFileRequest{
+		Uuid: "test_uuid",
+	}
+	file, _ := os.CreateTemp("", "test_file")
+	file.Close()
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"storages\" WHERE user_id = $1 AND uuid = $2 ORDER BY \"storages\".\"id\" LIMIT $3")).
+		WithArgs(1, "test_uuid", 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "uuid", "user_path", "metadata", "path"}).AddRow(1, "test_uuid", "test_user_path", "test_metadata", file.Name()))
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta("DELETE FROM \"storages\" WHERE user_id = $1 AND uuid = $2")).
+		WithArgs(1, "test_uuid").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	resp, err := server.DeleteFile(ctx, req)
+	assert.NoError(t, err)
+	assert.Equal(t, true, resp.Success)
 }

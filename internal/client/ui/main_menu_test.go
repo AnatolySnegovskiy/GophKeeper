@@ -4,6 +4,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
+	"goph_keeper/internal/testhepler"
 	"log/slog"
 	"os"
 	"testing"
@@ -33,7 +34,7 @@ func TestSelectRegistration(t *testing.T) {
 
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "1. Регистрация", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 }
 
 func TestSelectAuthorization(t *testing.T) {
@@ -48,11 +49,11 @@ func TestSelectAuthorization(t *testing.T) {
 	list, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
 
-	simulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
 
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "2. Авторизация", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 }
 
 func TestEscape(t *testing.T) {
