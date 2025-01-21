@@ -94,7 +94,8 @@ func TestUploadFile(t *testing.T) {
 
 	ctx := context.Background()
 	file, _ := os.CreateTemp("./.ssh/", "testfile.txt")
-	file.Write([]byte("Hello, World!"))
+	_, err := file.Write([]byte("Hello, World!"))
+	assert.NoError(t, err)
 	file.Close()
 	filePath := file.Name()
 	userPath := "/testuser/testfile.txt"

@@ -252,7 +252,8 @@ func TestGrpcServer_DownloadFile(t *testing.T) {
 		Uuid: "test_uuid",
 	}
 	file, _ := os.CreateTemp("", "test_file")
-	file.Write([]byte("test_content"))
+	_, err = file.Write([]byte("test_content"))
+	assert.NoError(t, err)
 	file.Close()
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM \"storages\" WHERE user_id = $1 AND uuid = $2 ORDER BY \"storages\".\"id\" LIMIT $3")).
 		WithArgs(1, "test_uuid", 1).
@@ -260,7 +261,8 @@ func TestGrpcServer_DownloadFile(t *testing.T) {
 
 	stream := &mockDownloadFileServer{}
 	stream.ctx = ctx
-	server.DownloadFile(req, stream)
+	err = server.DownloadFile(req, stream)
+	assert.NoError(t, err)
 
 	resp := stream.resp
 	assert.NotNil(t, resp)
