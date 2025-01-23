@@ -81,6 +81,7 @@ func TestSendFile(t *testing.T) {
 		go func() {
 			defer close(done)
 			err := client.sendFile(mockStream, metadata, tempFile.Name(), progressChan)
+			close(progressChan)
 			assert.NoError(t, err)
 
 		}()
@@ -90,7 +91,6 @@ func TestSendFile(t *testing.T) {
 				continue
 			}
 			assert.Equal(t, 100, progress)
-			close(progressChan)
 		}
 		<-done
 	})
