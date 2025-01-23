@@ -139,7 +139,7 @@ func TestDownloadFile(t *testing.T) {
 
 	ctx := context.Background()
 	uuid := "file_uuid"
-	path := os.TempDir() + "/testfile.txt"
+	path := os.TempDir()
 	progressChan := make(chan int, 100)
 
 	// Mock getAuthCTX response
@@ -155,13 +155,12 @@ func TestDownloadFile(t *testing.T) {
 
 	// Mock GetMetadataFile response
 	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(&v1.GetMetadataFileResponse{
-		Metadata: `{"FileName":"testfile.txt","FileSize":1024}`,
+		Metadata: `{"file_name":"eteas707606254","file_extension":"","mem_type":"application/octet-stream","is_compressed":false,"compression_type":"","file_size":82}`,
 	}, nil)
 
 	// Mock DownloadFile response
 	testFile := testhepler.GetTestGoodFile()
 	mockStream := testhepler.GetDownloadStreaming(testFile, v1.Status_STATUS_SUCCESS)
-	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil)
 	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil)
 	done := make(chan struct{})
 	go func() {
@@ -169,10 +168,14 @@ func TestDownloadFile(t *testing.T) {
 		file, err := client.DownloadFile(ctx, uuid, path, progressChan)
 		assert.NoError(t, err)
 		assert.NotNil(t, file)
+		close(progressChan)
 		file.Close()
 	}()
-	<-progressChan
-	close(progressChan)
+	for progress := range progressChan {
+		if progress == 100 {
+			break
+		}
+	}
 	<-done
 }
 

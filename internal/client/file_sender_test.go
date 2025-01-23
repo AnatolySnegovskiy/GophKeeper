@@ -51,6 +51,8 @@ func TestSendFile(t *testing.T) {
 	metadata := &entities.FileMetadata{
 		FileSize:     int64(len(data)),
 		IsCompressed: false,
+		FileName:     "testfile",
+		MemType:      "file",
 	}
 
 	// Создаем клиент
@@ -83,7 +85,6 @@ func TestSendFile(t *testing.T) {
 			err := client.sendFile(mockStream, metadata, tempFile.Name(), progressChan)
 			close(progressChan)
 			assert.NoError(t, err)
-
 		}()
 
 		for progress := range progressChan {
