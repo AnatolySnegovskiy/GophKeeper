@@ -98,7 +98,7 @@ func TestUploadFile(t *testing.T) {
 	assert.NoError(t, err)
 	file.Close()
 	filePath := file.Name()
-	userPath := "/testuser/testfile.txt"
+	userPath := "/testuser"
 	fileType := v1.DataType_DATA_TYPE_BINARY
 
 	// Mock UploadFile response
@@ -126,9 +126,15 @@ func TestUploadFile(t *testing.T) {
 		response, err := client.UploadFile(ctx, filePath, userPath, fileType, progressChan)
 		assert.NoError(t, err)
 		assert.True(t, response.Success)
+		close(progressChan)
 	}()
-	<-progressChan
-	close(progressChan)
+
+	for progress := range progressChan {
+		if progress == 100 {
+			break
+		}
+	}
+
 	<-done
 }
 
