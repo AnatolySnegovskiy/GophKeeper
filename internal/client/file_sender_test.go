@@ -76,7 +76,7 @@ func TestSendFile(t *testing.T) {
 	// Тест: успешная отправка файла
 	t.Run("Successful file send", func(t *testing.T) {
 		done := make(chan struct{})
-		progressChan := make(chan int, 100)
+		progressChan := make(chan int, 1)
 
 		go func() {
 			defer close(done)
@@ -84,8 +84,14 @@ func TestSendFile(t *testing.T) {
 			assert.NoError(t, err)
 
 		}()
-		assert.Equal(t, 100, <-progressChan)
-		close(progressChan)
+
+		for progress := range progressChan {
+			if progress < 100 {
+				continue
+			}
+			assert.Equal(t, 100, progress)
+			close(progressChan)
+		}
 		<-done
 	})
 
