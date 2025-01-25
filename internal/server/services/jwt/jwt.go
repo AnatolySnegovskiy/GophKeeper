@@ -18,6 +18,10 @@ func NewJwt() *Jwt {
 	}
 }
 
+func (j *Jwt) GetExpiredAt() time.Duration {
+	return j.ExpiredAt
+}
+
 func (j *Jwt) CreateToken() (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)

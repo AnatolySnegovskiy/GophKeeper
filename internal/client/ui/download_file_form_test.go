@@ -8,6 +8,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"goph_keeper/internal/testhepler"
 	"log/slog"
 	"os"
 	"strings"
@@ -16,9 +17,9 @@ import (
 )
 
 func TestShowDownloadFileForm(t *testing.T) {
-	mockClient := getMockGRPCClient(t)
-	testFile := getTestGoodFile()
-	mockStream := getDownloadStreaming(testFile, v1.Status_STATUS_SUCCESS)
+	mockClient := testhepler.GetMockGRPCClient(t)
+	testFile := testhepler.GetTestGoodFile()
+	mockStream := testhepler.GetDownloadStreaming(testFile, v1.Status_STATUS_SUCCESS)
 	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil)
 	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(
 		&v1.GetMetadataFileResponse{
@@ -27,7 +28,7 @@ func TestShowDownloadFileForm(t *testing.T) {
 		nil,
 	).AnyTimes()
 
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 	menu.showDownloadFileForm(&v1.ListDataEntry{
 		UserPath: "",
 		Uuid:     "1111",
@@ -37,20 +38,20 @@ func TestShowDownloadFileForm(t *testing.T) {
 	focused := menu.app.GetFocus()
 	_, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
-	simulateKeyPress(tcell.KeyDown, focused)
-	simulateKeyPress(tcell.KeyTab, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused)
 	focused = menu.app.GetFocus()
 	button, ok := focused.(*tview.Button)
 	assert.True(t, ok, "focused should be of type *tview.Button")
 	assert.Equal(t, "Select Directory", button.GetLabel())
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	focused = menu.app.GetFocus()
 
-	simulateKeyPress(tcell.KeyTab, focused)
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused)
 	focused = menu.app.GetFocus()
 	fmt.Printf("Focused widget type: %T\n", focused)
 
-	clear()
+	testhepler.Clear()
 }
 
 func TestCreateDownloadForm(t *testing.T) {
@@ -100,9 +101,9 @@ func TestHandleFileDownload(t *testing.T) {
 
 	entry := &v1.ListDataEntry{Uuid: "test-uuid"}
 
-	mockClient := getMockGRPCClient(t)
-	testFile := getTestGoodFile()
-	mockStream := getDownloadStreaming(testFile, v1.Status_STATUS_SUCCESS)
+	mockClient := testhepler.GetMockGRPCClient(t)
+	testFile := testhepler.GetTestGoodFile()
+	mockStream := testhepler.GetDownloadStreaming(testFile, v1.Status_STATUS_SUCCESS)
 	mockClient.EXPECT().DownloadFile(gomock.Any(), gomock.Any()).Return(mockStream, nil)
 	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(
 		&v1.GetMetadataFileResponse{
@@ -110,7 +111,7 @@ func TestHandleFileDownload(t *testing.T) {
 		},
 		nil,
 	).AnyTimes()
-	grpcClient := getGrpcClient(mockClient, slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	grpcClient := testhepler.GetGrpcClient(mockClient, slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 	done := make(chan struct{})
 	progressChan := make(chan int)
 
@@ -138,7 +139,7 @@ func TestHandleFileDownload(t *testing.T) {
 	case <-time.After(30 * time.Second):
 		t.Fatal("Test timed out")
 	}
-	clear()
+	testhepler.Clear()
 }
 
 func TestHandleFileDownloadErrorPath(t *testing.T) {
@@ -151,14 +152,14 @@ func TestHandleFileDownloadErrorPath(t *testing.T) {
 	}
 
 	entry := &v1.ListDataEntry{Uuid: "test-uuid"}
-	mockClient := getMockGRPCClient(t)
-	grpcClient := getGrpcClient(mockClient, slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	mockClient := testhepler.GetMockGRPCClient(t)
+	grpcClient := testhepler.GetGrpcClient(mockClient, slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 	progressChan := make(chan int)
 	handleFileDownload(os.TempDir()+"/invalid_path", entry, progressChan, info, grpcClient, mockApp)
 	mockApp.QueueUpdateDraw(func() {
 		assert.Conditionf(t, func() bool { return strings.Contains(info.GetText(false), "[red]Error") }, "Expected error message")
 	})
-	clear()
+	testhepler.Clear()
 }
 
 func TestHandleFileDownloadError(t *testing.T) {
@@ -171,8 +172,8 @@ func TestHandleFileDownloadError(t *testing.T) {
 	}
 
 	entry := &v1.ListDataEntry{Uuid: "test-uuid"}
-	mockClient := getMockGRPCClient(t)
-	grpcClient := getGrpcClient(mockClient, slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	mockClient := testhepler.GetMockGRPCClient(t)
+	grpcClient := testhepler.GetGrpcClient(mockClient, slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 	mockClient.EXPECT().GetMetadataFile(gomock.Any(), gomock.Any()).Return(
 		nil,
 		errors.New("test error"),
@@ -187,7 +188,7 @@ func TestHandleFileDownloadError(t *testing.T) {
 			"Expected error message",
 		)
 	})
-	clear()
+	testhepler.Clear()
 }
 
 func TestHandleProgressUpdates(t *testing.T) {
@@ -217,7 +218,7 @@ func TestHandleProgressUpdates(t *testing.T) {
 	assert.NotNil(t, button, "Expected form to have a button with text 'OK'")
 	assert.Equal(t, "OK", button.GetLabel(), "Expected form to have a button with text 'OK'")
 	form.SetFocus(0)
-	simulateKeyPress(tcell.KeyEnter, button)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, button)
 }
 
 type MockApplication struct {

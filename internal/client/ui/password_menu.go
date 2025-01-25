@@ -13,8 +13,9 @@ func (m *Menu) showPasswordMenu() {
 	res, err := m.grpcClient.GetStoreDataList(context.Background(), v1.DataType_DATA_TYPE_LOGIN_PASSWORD)
 	if err != nil {
 		m.errorHandler(err, func() {
-			m.showPasswordMenu()
+			m.showAppMenu()
 		})
+		return
 	}
 
 	list := tview.NewList()
@@ -36,16 +37,16 @@ func (m *Menu) showPasswordMenu() {
 			}
 			defer file.Close()
 			defer os.Remove(file.Name())
-
 			filePassword := &entities.FilePassword{}
 			err = filePassword.FromFile(file)
+
 			if err != nil {
 				m.errorHandler(err, func() {
 					m.showPasswordMenu()
 				})
 				return
 			}
-			filePassword.Uuid = uuid
+
 			m.showPasswordForm(filePassword)
 		})
 	}
@@ -79,7 +80,6 @@ func (m *Menu) showPasswordForm(passwordFile *entities.FilePassword) {
 				return
 			}
 			defer os.Remove(tmpFile.Name())
-
 			if passwordFile.Uuid != "" {
 				err := m.grpcClient.DeleteFile(context.Background(), passwordFile.Uuid)
 				if err != nil {

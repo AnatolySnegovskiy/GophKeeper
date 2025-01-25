@@ -4,6 +4,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
+	"goph_keeper/internal/testhepler"
 	"testing"
 )
 
@@ -18,14 +19,15 @@ func TestExplore(t *testing.T) {
 	focused := menu.app.GetFocus()
 	list, ok := focused.(*tview.List)
 	assert.True(t, ok, "focused should be of type *tview.List")
-	simulateKeyPress(tcell.KeyUp, focused)
+	testhepler.SimulateKeyPress(tcell.KeyUp, focused)
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "Back", currentItemName)
 
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 }
 
 func TestExploreUnix(t *testing.T) {
+	temp := GetGOOS
 	GetGOOS = func() string { return "linux" }
 	menu := &Menu{
 		app:   tview.NewApplication(),
@@ -40,10 +42,12 @@ func TestExploreUnix(t *testing.T) {
 
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "/", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	GetGOOS = temp
 }
 
 func TestExploreDir(t *testing.T) {
+	temp := GetGOOS
 	GetGOOS = func() string { return "linux" }
 	menu := &Menu{
 		app:   tview.NewApplication(),
@@ -60,22 +64,23 @@ func TestExploreDir(t *testing.T) {
 
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "/", currentItemName)
-	simulateKeyPress(tcell.KeyEnter, focused)
-	simulateKeyPress(tcell.KeyDown, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
-	simulateKeyPress(tcell.KeyDown, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
-	simulateKeyPress(tcell.KeyLeft, focused)
-	simulateKeyPress(tcell.KeyRight, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
-	simulateKeyPress(tcell.KeyPgUp, focused)
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyDown, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyLeft, focused)
+	testhepler.SimulateKeyPress(tcell.KeyRight, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyPgUp, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 
 	for i := 0; i < 50; i++ {
-		simulateKeyPress(tcell.KeyEnter, focused)
+		testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	}
+	GetGOOS = temp
 }
 
 func TestShowDirectoryContents(t *testing.T) {

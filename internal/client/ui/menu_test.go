@@ -6,9 +6,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"goph_keeper/internal/client"
+	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"goph_keeper/internal/testhepler"
 	"log/slog"
 	"os"
-	runtime "runtime"
 	"testing"
 )
 
@@ -53,8 +54,8 @@ func TestIsRootPath(t *testing.T) {
 		{os: "linux", path: "/home", result: false},
 	}
 
+	currentOS := GetGOOS()
 	for _, tc := range testCases {
-		currentOS := runtime.GOOS
 		if currentOS != tc.os {
 			continue
 		}
@@ -74,8 +75,8 @@ func TestIsDriveRoot(t *testing.T) {
 		{os: "linux", path: "/home", result: false},
 	}
 
+	currentOS := GetGOOS()
 	for _, tc := range testCases {
-		currentOS := runtime.GOOS
 		if currentOS != tc.os {
 			continue
 		}
@@ -128,5 +129,15 @@ func TestIsDriveRootGOOS(t *testing.T) {
 	}
 	if isDriveRoot("/home") {
 		t.Errorf("isDriveRoot(\"/home\") = true; want false")
+	}
+}
+
+func GetMenu(mockClient v1.GophKeeperV1ServiceClient) *Menu {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	return &Menu{
+		app:        tview.NewApplication(),
+		title:      "Test Title",
+		grpcClient: testhepler.GetGrpcClient(mockClient, logger),
+		logger:     logger,
 	}
 }

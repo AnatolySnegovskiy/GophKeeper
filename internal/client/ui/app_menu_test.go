@@ -4,6 +4,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/golang/mock/gomock"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"goph_keeper/internal/testhepler"
 	"testing"
 
 	"github.com/rivo/tview"
@@ -11,7 +12,7 @@ import (
 )
 
 func TestShowAppMenu(t *testing.T) {
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	mockClient.EXPECT().GetStoreDataList(gomock.Any(), gomock.Any()).Return(&v1.GetStoreDataListResponse{
 		Entries: []*v1.ListDataEntry{
 			{
@@ -21,7 +22,7 @@ func TestShowAppMenu(t *testing.T) {
 		},
 	}, nil).AnyTimes()
 	// Create a test menu
-	menu := getMenu(mockClient)
+	menu := GetMenu(mockClient)
 
 	// Call the showAppMenu function
 	menu.showAppMenu()
@@ -57,5 +58,5 @@ func TestShowAppMenu(t *testing.T) {
 	capturedEvent = menu.app.GetInputCapture()(event)
 	assert.NotNil(t, capturedEvent, "expected capturedEvent to be nil")
 
-	clear()
+	testhepler.Clear()
 }

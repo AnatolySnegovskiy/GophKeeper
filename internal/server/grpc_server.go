@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	entities2 "goph_keeper/internal/server/services/entities"
-	"goph_keeper/internal/server/services/jwt"
 	"goph_keeper/internal/server/services/models"
 	"goph_keeper/internal/services"
 	"goph_keeper/internal/services/grpc/goph_keeper/v1"
@@ -26,16 +25,22 @@ import (
 	"time"
 )
 
+type JWTInterface interface {
+	CreateToken() (string, error)
+	CheckToken(token string) error
+	GetExpiredAt() time.Duration
+}
+
 type GrpcServer struct {
 	v1.UnimplementedGophKeeperV1ServiceServer
 	logger      *slog.Logger
-	jwt         *jwt.Jwt
+	jwt         JWTInterface
 	redis       *redis.Client
 	db          *gorm.DB
 	storagePath string
 }
 
-func NewGrpcServer(logger *slog.Logger, jwt *jwt.Jwt, redis *redis.Client, db *gorm.DB) *GrpcServer {
+func NewGrpcServer(logger *slog.Logger, jwt JWTInterface, redis *redis.Client, db *gorm.DB) *GrpcServer {
 	server := &GrpcServer{}
 	server.logger = logger
 	server.jwt = jwt
@@ -113,7 +118,7 @@ func (s *GrpcServer) Verify2FA(ctx context.Context, req *v1.Verify2FARequest) (*
 	token, err := s.jwt.CreateToken()
 
 	if userId != 0 && token != "" {
-		s.redis.Set(ctx, token, userId, s.jwt.ExpiredAt)
+		s.redis.Set(ctx, token, userId, s.jwt.GetExpiredAt())
 	}
 
 	return &v1.Verify2FAResponse{

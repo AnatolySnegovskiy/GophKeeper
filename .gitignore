@@ -4,3 +4,5 @@
 /cmd/server/storage/
 /cmd/client/storage/
 /bin/
+/coverage.html
+/coverage.out

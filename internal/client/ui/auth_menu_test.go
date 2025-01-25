@@ -9,6 +9,7 @@ import (
 	"goph_keeper/internal/client"
 	"goph_keeper/internal/mocks"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"goph_keeper/internal/testhepler"
 	"log/slog"
 	"os"
 	"testing"
@@ -41,7 +42,7 @@ func TestShowRegistrationForm(t *testing.T) {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyTab, focused) // Перейти к следующему полю
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused) // Перейти к следующему полю
 	focused = menu.app.GetFocus()
 	inputFormHandler = focused.InputHandler()
 	// Симулируем ввод пароля
@@ -49,26 +50,26 @@ func TestShowRegistrationForm(t *testing.T) {
 		inputFormHandler(tcell.NewEventKey(tcell.KeyRune, r, 0), nil)
 	}
 
-	simulateKeyPress(tcell.KeyTab, focused) // Перейти к кнопке Register
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused) // Перейти к кнопке Register
 	focused = menu.app.GetFocus()
 	assert.IsType(t, &tview.Button{}, focused, "expected focused to be a tview.Form, but got %T", focused)
 	assert.Equal(t, "Register", focused.(*tview.Button).GetLabel(), "expected focused to be a tview.Form, but got %T", focused)
 	// Симулируем нажатие кнопки Register
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected showAuthorizationForm to be called")
 
 	menu.showRegistrationForm()
 	focused = menu.app.GetFocus()
-	simulateKeyPress(tcell.KeyTab, focused) // Перейти к следующему полю
-	simulateKeyPress(tcell.KeyTab, focused) // Перейти к кнопке Register
-	simulateKeyPress(tcell.KeyTab, focused) // Перейти к кнопке Cancel
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused) // Перейти к следующему полю
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused) // Перейти к кнопке Register
+	testhepler.SimulateKeyPress(tcell.KeyTab, focused) // Перейти к кнопке Cancel
 	focused = menu.app.GetFocus()
 	assert.IsType(t, &tview.Button{}, focused, "expected focused to be a tview.Form, but got %T", focused)
 	assert.Equal(t, "Cancel", focused.(*tview.Button).GetLabel(), "expected focused to be a tview.Form, but got %T", focused)
 
-	simulateKeyPress(tcell.KeyEnter, focused)
+	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected ShowMainMenu to be called")
-	clear()
+	testhepler.Clear()
 }
 
 func TestShowRegistrationFormFail(t *testing.T) {
@@ -128,11 +129,11 @@ func TestShowRegistrationFormFail(t *testing.T) {
 	focused = menu.app.GetFocus()
 	assert.Equal(t, "Username", focused.(*tview.InputField).GetLabel(), "expected focused to be a tview.Form, but got %T", focused)
 
-	clear()
+	testhepler.Clear()
 }
 
 func TestShowAuthorizationForm(t *testing.T) {
-	mockClient := getMockGRPCClient(t)
+	mockClient := testhepler.GetMockGRPCClient(t)
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	menu := &Menu{
 		app:        tview.NewApplication(),
@@ -186,5 +187,5 @@ func TestShowAuthorizationForm(t *testing.T) {
 
 	simulateKeyPress(tcell.KeyEnter, focused)
 	assert.True(t, true, "expected ShowMainMenu to be called")
-	clear()
+	testhepler.Clear()
 }
