@@ -27,6 +27,7 @@ func TestExplore(t *testing.T) {
 }
 
 func TestExploreUnix(t *testing.T) {
+	temp := GetGOOS
 	GetGOOS = func() string { return "linux" }
 	menu := &Menu{
 		app:   tview.NewApplication(),
@@ -42,9 +43,11 @@ func TestExploreUnix(t *testing.T) {
 	currentItemName, _ := list.GetItemText(list.GetCurrentItem())
 	assert.Equal(t, "/", currentItemName)
 	testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
+	GetGOOS = temp
 }
 
 func TestExploreDir(t *testing.T) {
+	temp := GetGOOS
 	GetGOOS = func() string { return "linux" }
 	menu := &Menu{
 		app:   tview.NewApplication(),
@@ -77,6 +80,7 @@ func TestExploreDir(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		testhepler.SimulateKeyPress(tcell.KeyEnter, focused)
 	}
+	GetGOOS = temp
 }
 
 func TestShowDirectoryContents(t *testing.T) {

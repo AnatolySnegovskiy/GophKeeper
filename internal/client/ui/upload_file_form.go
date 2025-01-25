@@ -15,11 +15,6 @@ func (m *Menu) showSendFileForm() {
 		SetText("")
 
 	f := func(filePath string, rollback func()) {
-		if filePath == "" {
-			info.SetText("File Path cannot be empty")
-			return
-		}
-
 		userPathField := tview.NewInputField().
 			SetLabel("User Path:").
 			SetFieldWidth(40)
@@ -55,6 +50,7 @@ func (m *Menu) showSendFileForm() {
 				m.app.QueueUpdateDraw(func() {
 					info.SetText(fmt.Sprintf("[green]Success: %t", res.Success))
 				})
+
 			}()
 
 			go func() {
