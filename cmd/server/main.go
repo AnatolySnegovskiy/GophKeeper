@@ -56,6 +56,5 @@ func main() {
 
 	<-quit
 	logger.Info("Received signal, exiting...")
-	serv.Stop()
 	os.Exit(0)
 }

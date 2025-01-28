@@ -347,7 +347,3 @@ func (s *GrpcServer) getUserId(ctx context.Context) int {
 
 	return userID
 }
-
-func (s *GrpcServer) Stop() {
-
-}
