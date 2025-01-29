@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package grpc.goph_keeper.v1;
+
+option go_package = "GophKeeper/proto/grpc/server/v1";
+
+service GophKeeperV1Service {
+  // User registration
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse);
+
+  // User authentication
+  rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse);
+
+  // Verifying 2FA
+  rpc Verify2FA(Verify2FARequest) returns (Verify2FAResponse);
+
+  // streaming file
+  rpc UploadFile(stream UploadFileRequest) returns (UploadFileResponse);
+
+  // Set metadata file
+  rpc SetMetadataFile(SetMetadataFileRequest) returns (SetMetadataFileResponse);
+
+  // Listing files in server
+  rpc GetStoreDataList(GetStoreDataListRequest) returns (GetStoreDataListResponse);
+
+  // Requesting private data (streaming)
+  rpc DownloadFile(DownloadFileRequest) returns (stream DownloadFileResponse);
+
+  // Get metadata file
+  rpc GetMetadataFile(GetMetadataFileRequest) returns (GetMetadataFileResponse);
+
+  // Delete file
+  rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
+}
+
+// User Registration
+message RegisterUserRequest {
+  string username = 1;
+  string password = 2;
+  string ssh_pub_key = 3;
+}
+
+// User Registration Response
+message RegisterUserResponse {
+  bool success = 1;
+}
+
+// User Authentication
+message AuthenticateUserRequest {
+  string username = 1;
+  string password = 2;
+}
+
+// User Authentication Response
+message AuthenticateUserResponse {
+  bool success = 1;
+  string token = 2;
+}
+
+// Verifying 2FA (2FA) token from ssh cache
+message Verify2FARequest {
+  string token = 1;
+}
+
+// Verifying 2FA (2FA) response
+message Verify2FAResponse {
+  bool success = 1;
+  string jwt_token = 2;
+}
+
+message UploadFileRequest {
+  Status status = 1;
+  bytes data = 2;
+}
+
+// Storing Private Data Response
+message UploadFileResponse {
+  bool success = 1;
+  string uuid = 2;
+}
+
+// Storing Data
+message SetMetadataFileRequest {
+  string uuid = 1;
+  DataType data_type = 2;  // e.g., "login_password", "text", "binary", "card"
+  string metadata = 3;
+  string user_path = 4;
+  int32 size_chunks = 5;
+}
+
+// Storing Private Data Response
+message SetMetadataFileResponse {
+  bool success = 1;
+}
+
+// Listing Private Data
+message GetStoreDataListRequest {
+    DataType data_type = 1;
+}
+
+// Requesting Private Data
+message GetStoreDataListResponse {
+  repeated ListDataEntry entries = 1;
+}
+
+// Requesting Private Data
+message ListDataEntry {
+  string uuid = 1;
+  string user_path = 2;
+}
+
+message GetMetadataFileRequest {
+  string uuid = 1;
+}
+
+message GetMetadataFileResponse {
+  string metadata = 1;
+}
+
+// Requesting Private Data (streaming)
+message DownloadFileRequest {
+  string uuid = 1;
+}
+
+// Requesting Private Data
+message DownloadFileResponse {
+  Status status = 1;
+  bytes data = 2;
+}
+
+message DeleteFileRequest {
+  string uuid = 1;
+}
+
+message DeleteFileResponse {
+  bool success = 1;
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_SUCCESS = 1;
+  STATUS_FAIL = 2;
+  STATUS_PROCESSING = 3;
+  STATUS_CANCELLED = 4;
+}
+
+// Enum for Data Types
+enum DataType {
+  DATA_TYPE_UNSPECIFIED = 0; // Default value, indicates unspecified data type
+  DATA_TYPE_LOGIN_PASSWORD = 1;
+  DATA_TYPE_BINARY = 3;
+  DATA_TYPE_CARD = 4;
+}

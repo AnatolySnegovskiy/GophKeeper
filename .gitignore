@@ -1,0 +1,8 @@
+/app_volumes/
+/.idea/
+/proto/*.lock
+/cmd/server/storage/
+/cmd/client/storage/
+/bin/
+/coverage.html
+/coverage.out
