@@ -2,43 +2,89 @@ package main
 
 import (
 	"fmt"
-	client2 "goph_keeper/config/client"
+	config "goph_keeper/config/client"
 	"goph_keeper/internal/client"
 	"goph_keeper/internal/client/ui"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/rivo/tview"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func handleError(logger *slog.Logger, err error) {
+func (a *app) handleError(err error) {
 	if err != nil {
-		logger.Error(err.Error())
+		a.logger.Error(err.Error())
+		a.stop()
 		os.Exit(1)
 	}
 }
 
-func main() {
+type app struct {
+	logger         *slog.Logger
+	logFile        *os.File
+	config         config.Config
+	grpcClientConn *grpc.ClientConn
+}
+
+func (a *app) upLogger() {
 	file, err := os.OpenFile("logs/client.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Failed to open log file")
 		os.Exit(1)
 	}
 
-	defer file.Close()
 	logger := slog.New(slog.NewJSONHandler(file, nil))
 	logger.Info("Log file opened")
-	conf, err := client2.NewConfig()
-	handleError(logger, err)
 
-	conn, _ := grpc.NewClient(conf.Server.Host+":"+conf.Server.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	defer conn.Close()
-	c := client.NewGrpcClient(logger, v1.NewGophKeeperV1ServiceClient(conn))
+	a.logger = logger
+	a.logFile = file
+}
+
+func (a *app) upConfig() {
+	var err error
+	a.config, err = config.NewConfig()
+	a.handleError(err)
+}
+
+func (a *app) upClientGrpc() *client.GrpcClient {
+	a.grpcClientConn, _ = grpc.NewClient(a.config.Server.Host+":"+a.config.Server.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	return client.NewGrpcClient(a.logger, v1.NewGophKeeperV1ServiceClient(a.grpcClientConn))
+}
+
+func (a *app) stop() {
+	err := a.grpcClientConn.Close()
+	if err != nil {
+		a.logger.Error(err.Error())
+	}
+	err = a.logFile.Close()
+	if err != nil {
+		a.logger.Error(err.Error())
+	}
+}
+
+func (a *app) Run() {
+	a.upLogger()
+	a.upConfig()
 	app := tview.NewApplication()
-	menu := ui.NewMenu(app, logger, c)
+	menu := ui.NewMenu(app, a.logger, a.upClientGrpc())
 	menu.ShowMainMenu()
-	handleError(logger, app.Run())
+	a.handleError(app.Run())
+}
+
+func main() {
+	a := &app{}
+	a.Run()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	<-quit
+
+	a.logger.Info("Received signal, exiting...")
+	a.stop()
+	os.Exit(0)
 }

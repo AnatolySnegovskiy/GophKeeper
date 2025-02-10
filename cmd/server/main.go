@@ -19,8 +19,8 @@ import (
 )
 
 type app struct {
-	config  config.Config
 	logger  *slog.Logger
+	config  config.Config
 	redis   *redis.Client
 	logFile *os.File
 	gorm    *gorm.DB
