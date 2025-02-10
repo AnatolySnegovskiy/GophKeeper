@@ -8,6 +8,7 @@ import (
 	"goph_keeper/internal/server/services/db"
 	"goph_keeper/internal/server/services/jwt"
 	"io"
+	"log"
 	"log/slog"
 	"net"
 	"os"
@@ -18,6 +19,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var gormPostgres = db.NewGormPostgres
+
 type app struct {
 	logger  *slog.Logger
 	config  config.Config
@@ -27,15 +30,13 @@ type app struct {
 	server  *server.GrpcServer
 }
 
-func (a *app) Run() {
+func (a *app) makeApp() net.Listener {
 	a.upLogger()
 	a.upConfig()
 	a.upRedisClient()
 	a.upGorm()
 
-	lis := a.upListener()
-	go func() { a.handleError(a.server.Run(lis)) }()
-	a.logger.Info(fmt.Sprintf("server listening at: %s", lis.Addr()))
+	return a.upListener()
 }
 
 func (a *app) handleError(err error) {
@@ -55,7 +56,7 @@ func (a *app) upListener() net.Listener {
 
 func (a *app) upGorm() {
 	var err error
-	a.gorm, err = db.NewGormPostgres(a.config.DB.DSN)
+	a.gorm, err = gormPostgres(a.config.DB.DSN)
 	a.handleError(err)
 }
 
@@ -74,6 +75,10 @@ func (a *app) upRedisClient() {
 }
 
 func (a *app) upLogger() {
+	if err := os.MkdirAll("logs", 0755); err != nil {
+		log.Fatal(err)
+	}
+
 	file, err := os.OpenFile("logs/server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Failed to open log file")
@@ -97,7 +102,9 @@ func (a *app) stop() {
 
 func main() {
 	a := &app{}
-	a.Run()
+	lis := a.makeApp()
+	go func() { a.handleError(a.server.Run(lis)) }()
+	a.logger.Info(fmt.Sprintf("server listening at: %s", lis.Addr()))
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)

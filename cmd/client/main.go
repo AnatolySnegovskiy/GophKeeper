@@ -6,6 +6,7 @@ import (
 	"goph_keeper/internal/client"
 	"goph_keeper/internal/client/ui"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"log"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -29,9 +30,14 @@ type app struct {
 	logFile        *os.File
 	config         config.Config
 	grpcClientConn *grpc.ClientConn
+	tviewApp       *tview.Application
 }
 
 func (a *app) upLogger() {
+	if err := os.MkdirAll("logs", 0755); err != nil {
+		log.Fatal(err)
+	}
+
 	file, err := os.OpenFile("logs/client.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Failed to open log file")
@@ -67,19 +73,18 @@ func (a *app) stop() {
 	}
 }
 
-func (a *app) Run() {
+func (a *app) makeApp() {
 	a.upLogger()
 	a.upConfig()
-	app := tview.NewApplication()
-	menu := ui.NewMenu(app, a.logger, a.upClientGrpc())
+	a.tviewApp = tview.NewApplication()
+	menu := ui.NewMenu(a.tviewApp, a.logger, a.upClientGrpc())
 	menu.ShowMainMenu()
-	a.handleError(app.Run())
 }
 
 func main() {
 	a := &app{}
-	a.Run()
-
+	a.makeApp()
+	a.handleError(a.tviewApp.Run())
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	<-quit
