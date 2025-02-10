@@ -2,8 +2,9 @@ package jwt
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 type Jwt struct {
@@ -24,7 +25,10 @@ func (j *Jwt) GetExpiredAt() time.Duration {
 
 func (j *Jwt) CreateToken() (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", fmt.Errorf("invalid claims")
+	}
 	claims["exp"] = time.Now().Add(j.ExpiredAt).Unix()
 	tokenString, err := token.SignedString(j.key)
 	return tokenString, err

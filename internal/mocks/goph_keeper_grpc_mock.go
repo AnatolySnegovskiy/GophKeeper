@@ -11,9 +11,10 @@ package mocks
 
 import (
 	context "context"
-	"github.com/golang/mock/gomock"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	reflect "reflect"
+
+	"github.com/golang/mock/gomock"
 	grpc "google.golang.org/grpc"
 )
 

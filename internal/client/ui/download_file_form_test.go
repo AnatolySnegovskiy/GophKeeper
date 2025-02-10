@@ -3,10 +3,6 @@ package ui
 import (
 	"errors"
 	"fmt"
-	"github.com/gdamore/tcell/v2"
-	"github.com/golang/mock/gomock"
-	"github.com/rivo/tview"
-	"github.com/stretchr/testify/assert"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"goph_keeper/internal/testhepler"
 	"log/slog"
@@ -14,6 +10,11 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/golang/mock/gomock"
+	"github.com/rivo/tview"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestShowDownloadFileForm(t *testing.T) {

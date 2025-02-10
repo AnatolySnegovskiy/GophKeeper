@@ -2,11 +2,12 @@ package ui
 
 import (
 	"fmt"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 type TypeSelection int
@@ -44,7 +45,6 @@ func (m *Menu) explore(typeSelection TypeSelection, callback func(filePath strin
 
 	drives := getDrives()
 	for _, drive := range drives {
-		drive := drive
 		exp.list.AddItem(drive, "", 0, func() {
 			exp.currentPath = drive
 			m.showDirectoryContents(exp, callback)

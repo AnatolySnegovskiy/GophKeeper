@@ -1,9 +1,10 @@
 package client
 
 import (
-	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {

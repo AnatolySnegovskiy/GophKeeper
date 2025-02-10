@@ -1,10 +1,11 @@
 package ui
 
 import (
-	"github.com/rivo/tview"
 	"goph_keeper/internal/client"
 	"log/slog"
 	"runtime"
+
+	"github.com/rivo/tview"
 )
 
 var GetGOOS = func() string {

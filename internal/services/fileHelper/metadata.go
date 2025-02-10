@@ -1,4 +1,4 @@
-package file_helper
+package fileHelper
 
 import (
 	"goph_keeper/internal/services/entities"

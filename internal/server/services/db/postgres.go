@@ -2,6 +2,7 @@ package db
 
 import (
 	entities2 "goph_keeper/internal/server/services/entities"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

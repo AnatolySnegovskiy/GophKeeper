@@ -1,8 +1,9 @@
 package ui
 
 import (
-	"github.com/rivo/tview"
 	"path/filepath"
+
+	"github.com/rivo/tview"
 )
 
 func (m *Menu) showFilesMenu() {

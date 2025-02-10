@@ -2,11 +2,12 @@ package ui
 
 import (
 	"context"
-	"github.com/rivo/tview"
 	"goph_keeper/internal/services/entities"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"os"
 	"strings"
+
+	"github.com/rivo/tview"
 )
 
 func (m *Menu) showPasswordMenu() {

@@ -2,9 +2,6 @@ package client_test
 
 import (
 	"context"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc"
 	"goph_keeper/internal/client"
 	"goph_keeper/internal/mocks"
 	"goph_keeper/internal/services"
@@ -14,6 +11,10 @@ import (
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
 )
 
 type MockUploadFileClient struct {

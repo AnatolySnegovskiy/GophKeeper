@@ -3,10 +3,6 @@ package testhepler
 import (
 	"context"
 	"encoding/hex"
-	"github.com/gdamore/tcell/v2"
-	"github.com/golang/mock/gomock"
-	"github.com/rivo/tview"
-	"google.golang.org/grpc"
 	"goph_keeper/internal/client"
 	"goph_keeper/internal/mocks"
 	"goph_keeper/internal/services"
@@ -16,13 +12,17 @@ import (
 	"os"
 	"strconv"
 	"testing"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/golang/mock/gomock"
+	"github.com/rivo/tview"
+	"google.golang.org/grpc"
 )
 
 // MockDownloadFileClient - мок для интерфейса grpc.ServerStreamingClient[v1.DownloadFileResponse]
 type MockDownloadFileClient struct {
 	grpc.ServerStreamingClient[v1.DownloadFileResponse]
 	recvFunc  func() (*v1.DownloadFileResponse, error)
-	ctx       context.Context
 	callCount int
 }
 
@@ -107,7 +107,6 @@ func GetDownloadStreaming(content []byte, status v1.Status) *MockDownloadFileCli
 				Status: status,
 			}, io.EOF
 		},
-		ctx: context.Background(),
 	}
 }
 

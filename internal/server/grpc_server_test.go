@@ -2,6 +2,16 @@ package server
 
 import (
 	"context"
+	"goph_keeper/internal/server/services/jwt"
+	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"io"
+	"log/slog"
+	"net"
+	"os"
+	"regexp"
+	"testing"
+	"time"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-redis/redismock/v9"
 	"github.com/redis/go-redis/v9"
@@ -10,18 +20,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	"goph_keeper/internal/server/services/jwt"
-	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"io"
-	"log/slog"
-	"net"
-	"os"
-	"regexp"
-	"testing"
-	"time"
 )
 
 func TestGrpcServer_Run(t *testing.T) {

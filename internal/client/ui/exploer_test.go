@@ -1,11 +1,12 @@
 package ui
 
 import (
+	"goph_keeper/internal/testhepler"
+	"testing"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
-	"goph_keeper/internal/testhepler"
-	"testing"
 )
 
 func TestExplore(t *testing.T) {

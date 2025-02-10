@@ -3,12 +3,13 @@ package ui
 import (
 	"context"
 	"fmt"
-	"github.com/rivo/tview"
 	"goph_keeper/internal/client"
-	"goph_keeper/internal/services/grpc/goph_keeper/v1"
+	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"os"
 	"path/filepath"
 	"regexp"
+
+	"github.com/rivo/tview"
 )
 
 type ApplicationInterface interface {
@@ -23,7 +24,7 @@ func (m *Menu) showDownloadFileForm(entry *v1.ListDataEntry, rollbackFilesMenu f
 		SetDynamicColors(true).
 		SetText("")
 
-	f := func(directoryPath string, rollback func()) {
+	f := func(directoryPath string, _ func()) {
 		form := createDownloadForm(info, progressBar)
 		m.app.SetRoot(createFlexLayout(form), true)
 		progressChan := make(chan int)

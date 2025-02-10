@@ -3,12 +3,13 @@ package client
 import (
 	"crypto/rand"
 	"fmt"
-	"golang.org/x/crypto/chacha20"
 	"goph_keeper/internal/services/entities"
-	"goph_keeper/internal/services/file_helper"
+	"goph_keeper/internal/services/fileHelper"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"io"
 	"os"
+
+	"golang.org/x/crypto/chacha20"
 )
 
 func (c *GrpcClient) sendFile(stream v1.GophKeeperV1Service_UploadFileClient, fileMetadata *entities.FileMetadata, filePath string, progressChan chan<- int) error {
@@ -103,7 +104,7 @@ func (c *GrpcClient) preparedFile(metadata *entities.FileMetadata, filePath stri
 		return file, nil
 	}
 
-	file, err = file_helper.CompressGZIP(file)
+	file, err = fileHelper.CompressGZIP(file)
 	if err != nil {
 		return nil, err
 	}

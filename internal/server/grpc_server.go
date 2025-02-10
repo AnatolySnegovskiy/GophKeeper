@@ -4,17 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 	entities2 "goph_keeper/internal/server/services/entities"
 	"goph_keeper/internal/server/services/models"
 	"goph_keeper/internal/services"
-	"goph_keeper/internal/services/grpc/goph_keeper/v1"
-	"gorm.io/gorm"
+	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"io"
 	"log/slog"
 	"math/rand"
@@ -23,6 +16,14 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
 
 type JWTInterface interface {

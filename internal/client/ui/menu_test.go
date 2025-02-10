@@ -2,15 +2,16 @@ package ui
 
 import (
 	"errors"
-	"github.com/rivo/tview"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"goph_keeper/internal/client"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"goph_keeper/internal/testhepler"
 	"log/slog"
 	"os"
 	"testing"
+
+	"github.com/rivo/tview"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewMenu(t *testing.T) {

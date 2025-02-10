@@ -1,13 +1,14 @@
 package ui
 
 import (
+	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"goph_keeper/internal/testhepler"
+	"testing"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/rivo/tview"
 	"github.com/stretchr/testify/assert"
-	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
-	"goph_keeper/internal/testhepler"
-	"testing"
 )
 
 func TestShowFilesMenu(t *testing.T) {

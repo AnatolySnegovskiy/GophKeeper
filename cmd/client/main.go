@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/rivo/tview"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	client2 "goph_keeper/config/client"
 	"goph_keeper/internal/client"
 	"goph_keeper/internal/client/ui"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"log/slog"
 	"os"
+
+	"github.com/rivo/tview"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func handleError(logger *slog.Logger, err error) {

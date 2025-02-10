@@ -3,10 +3,11 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/go-redis/redismock/v9"
-	"github.com/golang/mock/gomock"
 	"goph_keeper/internal/mocks"
 	"testing"
+
+	"github.com/go-redis/redismock/v9"
+	"github.com/golang/mock/gomock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

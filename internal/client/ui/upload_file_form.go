@@ -3,9 +3,10 @@ package ui
 import (
 	"context"
 	"fmt"
-	"github.com/rivo/tview"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"strings"
+
+	"github.com/rivo/tview"
 )
 
 func (m *Menu) showSendFileForm() {

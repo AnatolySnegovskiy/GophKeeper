@@ -4,15 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/crypto/chacha20"
-	"google.golang.org/grpc/metadata"
 	"goph_keeper/internal/services"
 	"goph_keeper/internal/services/entities"
-	"goph_keeper/internal/services/file_helper"
-	"goph_keeper/internal/services/grpc/goph_keeper/v1"
+	"goph_keeper/internal/services/fileHelper"
+	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"io"
 	"log/slog"
 	"os"
+
+	"golang.org/x/crypto/chacha20"
+	"google.golang.org/grpc/metadata"
 )
 
 type GrpcClient struct {
@@ -92,7 +93,7 @@ func (c *GrpcClient) UploadFile(ctx context.Context, filePath string, userPath s
 		return nil, err
 	}
 
-	fileMetadata, err := file_helper.GetFileMetadata(filePath)
+	fileMetadata, err := fileHelper.GetFileMetadata(filePath)
 	if err != nil {
 		return nil, err
 	}

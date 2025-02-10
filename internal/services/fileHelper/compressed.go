@@ -1,4 +1,4 @@
-package file_helper
+package fileHelper
 
 import (
 	"compress/gzip"

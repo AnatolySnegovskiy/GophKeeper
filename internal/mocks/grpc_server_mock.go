@@ -10,9 +10,10 @@
 package mocks
 
 import (
-	"github.com/golang/mock/gomock"
 	reflect "reflect"
 	time "time"
+
+	"github.com/golang/mock/gomock"
 )
 
 // MockJWTInterface is a mock of JWTInterface interface.

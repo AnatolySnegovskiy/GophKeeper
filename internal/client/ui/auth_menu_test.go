@@ -2,10 +2,6 @@ package ui
 
 import (
 	"errors"
-	"github.com/gdamore/tcell/v2"
-	"github.com/golang/mock/gomock"
-	"github.com/rivo/tview"
-	"github.com/stretchr/testify/assert"
 	"goph_keeper/internal/client"
 	"goph_keeper/internal/mocks"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
@@ -13,6 +9,11 @@ import (
 	"log/slog"
 	"os"
 	"testing"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/golang/mock/gomock"
+	"github.com/rivo/tview"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestShowRegistrationForm(t *testing.T) {

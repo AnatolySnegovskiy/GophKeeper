@@ -2,12 +2,13 @@ package client
 
 import (
 	"errors"
-	"google.golang.org/grpc"
 	"goph_keeper/internal/services/entities"
 	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"log/slog"
 	"os"
 	"testing"
+
+	"google.golang.org/grpc"
 
 	"github.com/stretchr/testify/assert"
 )

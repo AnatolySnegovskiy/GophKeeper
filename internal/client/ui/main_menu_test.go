@@ -1,13 +1,14 @@
 package ui
 
 import (
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
-	"github.com/stretchr/testify/assert"
 	"goph_keeper/internal/testhepler"
 	"log/slog"
 	"os"
 	"testing"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestShowMainMenu(t *testing.T) {

@@ -3,9 +3,10 @@ package models
 import (
 	"fmt"
 	"goph_keeper/internal/server/services/entities"
-	"goph_keeper/internal/services/grpc/goph_keeper/v1"
-	"gorm.io/gorm"
+	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"log/slog"
+
+	"gorm.io/gorm"
 )
 
 type StorageModel struct {

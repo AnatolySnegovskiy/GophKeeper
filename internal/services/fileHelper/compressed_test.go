@@ -1,8 +1,8 @@
-package file_helper_test
+package fileHelper_test
 
 import (
 	"compress/gzip"
-	"goph_keeper/internal/services/file_helper"
+	"goph_keeper/internal/services/fileHelper"
 	"io"
 	"os"
 	"testing"
@@ -31,7 +31,7 @@ func TestCompressGZIP(t *testing.T) {
 	defer tmpFile.Close()
 
 	// Test CompressGZIP function
-	compressedFile, err := file_helper.CompressGZIP(tmpFile)
+	compressedFile, err := fileHelper.CompressGZIP(tmpFile)
 	assert.NoError(t, err)
 	assert.NotNil(t, compressedFile)
 	defer compressedFile.Close()
@@ -63,7 +63,7 @@ func TestCompressGZIP(t *testing.T) {
 	// Test with a non-existent file
 	nonExistentFile, err := os.Open("non_existent_file.txt")
 	assert.Error(t, err)
-	_, err = file_helper.CompressGZIP(nonExistentFile)
+	_, err = fileHelper.CompressGZIP(nonExistentFile)
 	assert.Error(t, err)
 
 	// Test with a file that cannot be created for writing
@@ -71,6 +71,6 @@ func TestCompressGZIP(t *testing.T) {
 	assert.NoError(t, err)
 	badFile.Close()
 	os.Remove(badFile.Name()) // Delete the file to simulate error
-	_, err = file_helper.CompressGZIP(badFile)
+	_, err = fileHelper.CompressGZIP(badFile)
 	assert.Error(t, err)
 }

@@ -1,7 +1,7 @@
 package entities
 
 import (
-	"goph_keeper/internal/services/grpc/goph_keeper/v1"
+	v1 "goph_keeper/internal/services/grpc/goph_keeper/v1"
 	"time"
 )
 
