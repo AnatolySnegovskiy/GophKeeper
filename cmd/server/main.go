@@ -20,6 +20,7 @@ import (
 )
 
 var gormPostgres = db.NewGormPostgres
+var redisClient = redis.NewClient
 
 type app struct {
 	logger  *slog.Logger
@@ -67,7 +68,7 @@ func (a *app) upConfig() {
 }
 
 func (a *app) upRedisClient() {
-	a.redis = redis.NewClient(&redis.Options{
+	a.redis = redisClient(&redis.Options{
 		Addr:     a.config.Redis.Host + ":" + a.config.Redis.Port,
 		Password: a.config.Redis.Password,
 	})

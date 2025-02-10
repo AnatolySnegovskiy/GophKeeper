@@ -28,4 +28,5 @@ server:
 	assert.NoError(t, err)
 	a := &app{}
 	a.makeApp()
+	os.RemoveAll(configDir)
 }
