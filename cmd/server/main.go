@@ -91,13 +91,18 @@ func (a *app) upLogger() {
 }
 
 func (a *app) stop() {
-	err := a.redis.Close()
-	if err != nil {
-		a.logger.Error(err.Error())
+	if a.redis != nil {
+		err := a.redis.Close()
+		if err != nil {
+			a.logger.Error(err.Error())
+		}
 	}
-	err = a.logFile.Close()
-	if err != nil {
-		a.logger.Error(err.Error())
+
+	if a.logFile != nil {
+		err := a.logFile.Close()
+		if err != nil {
+			a.logger.Error(err.Error())
+		}
 	}
 }
 

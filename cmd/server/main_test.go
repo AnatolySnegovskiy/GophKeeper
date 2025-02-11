@@ -61,12 +61,10 @@ func TestMakeAppFail(t *testing.T) {
 	// Создаем временный файл конфигурации для тестирования
 	configFile := filepath.Join(configDir, "config-server.yaml")
 	configContent := `
-server:
-  host: localhost
-  port: 5555
+server
 redis:
   host: localhost
-  por22t: 6379
+  por22t: 637
   pass2word: secret
 db:
   dsn: postgres://user:password@localhost/dbname
@@ -82,6 +80,6 @@ db:
 	err = os.WriteFile(configFile, []byte(configContent), 0644)
 	assert.NoError(t, err)
 	a := &app{}
-	a.makeApp()
+	go a.makeApp()
 	os.RemoveAll(configDir)
 }
