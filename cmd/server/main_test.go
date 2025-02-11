@@ -45,5 +45,6 @@ db:
 	assert.NoError(t, err)
 	a := &app{}
 	a.makeApp()
+	a.stop()
 	os.RemoveAll(configDir)
 }
