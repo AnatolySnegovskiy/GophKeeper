@@ -1,0 +1,4 @@
+ignore:
+  - "./internal/services/grpc/.*"
+  - "./internal/mocks/.*"
+  - "./internal/testhepler/.*"

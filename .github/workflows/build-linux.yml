@@ -1,0 +1,65 @@
+name: Build Linux
+
+on: [workflow_call]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.22'
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Build server for Linux
+        run: |
+          mkdir -p build/GophKeeper-linux
+          mkdir -p build/GophKeeper-linux/configs
+          mkdir -p build/GophKeeper-linux/logs
+          GOOS=linux GOARCH=amd64 go build -o build/GophKeeper-linux/server ./cmd/server
+
+      - name: Create server config file
+        run: |
+          echo "server:
+            host: localhost
+            port: 8080
+          redis:
+            host: localhost
+            port: 6379
+            password: \"my_redis_password\"
+          db:
+            dsn: \"postgres://postgres:root@localhost:5432\"" > build/GophKeeper-linux/configs/config-server.yaml
+
+      - name: Build client for Linux
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o build/GophKeeper-linux/client ./cmd/client
+
+      - name: Create client config file
+        run: |
+          echo "server:
+            host: localhost
+            port: 8080" > build/GophKeeper-linux/configs/config-client.yaml
+
+      - name: Create release directory
+        run: mkdir -p release
+
+      - name: Create ZIP archive for Linux
+        run: |
+          cd build
+          zip -r ../release/GophKeeper-linux.zip GophKeeper-linux
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-linux
+          path: release/GophKeeper-linux.zip
+
+      - name: Check build-linux success
+        if: failure()
+        run: echo "Build for Linux failed"

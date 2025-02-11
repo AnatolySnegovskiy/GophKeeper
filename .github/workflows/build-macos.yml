@@ -1,0 +1,65 @@
+name: Build macOS
+
+on: [workflow_call]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.22'
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Build server for macOS
+        run: |
+          mkdir -p build/GophKeeper-darwin
+          mkdir -p build/GophKeeper-darwin/configs
+          mkdir -p build/GophKeeper-darwin/logs
+          GOOS=darwin GOARCH=amd64 go build -o build/GophKeeper-darwin/server ./cmd/server
+
+      - name: Create server config file
+        run: |
+          echo "server:
+            host: localhost
+            port: 8080
+          redis:
+            host: localhost
+            port: 6379
+            password: \"my_redis_password\"
+          db:
+            dsn: \"postgres://postgres:root@localhost:5432\"" > build/GophKeeper-darwin/configs/config-server.yaml
+
+      - name: Build client for macOS
+        run: |
+          GOOS=darwin GOARCH=amd64 go build -o build/GophKeeper-darwin/client ./cmd/client
+
+      - name: Create client config file
+        run: |
+          echo "server:
+            host: localhost
+            port: 8080" > build/GophKeeper-darwin/configs/config-client.yaml
+
+      - name: Create release directory
+        run: mkdir -p release
+
+      - name: Create ZIP archive for macOS
+        run: |
+          cd build
+          zip -r ../release/GophKeeper-darwin.zip GophKeeper-darwin
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-darwin
+          path: release/GophKeeper-darwin.zip
+
+      - name: Check build-macos success
+        if: failure()
+        run: echo "Build for macOS failed"

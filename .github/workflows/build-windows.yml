@@ -1,0 +1,90 @@
+name: Build Windows
+
+on: [workflow_call]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.22'
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Create build directory
+        run: |
+          if (-Not (Test-Path -Path build/GophKeeper-windows)) {
+            New-Item -ItemType Directory -Path build/GophKeeper-windows
+          }
+          if (-Not (Test-Path -Path build/GophKeeper-windows/configs)) {
+            New-Item -ItemType Directory -Path build/GophKeeper-windows/configs
+          }
+          if (-Not (Test-Path -Path build/GophKeeper-windows/logs)) {
+            New-Item -ItemType Directory -Path build/GophKeeper-windows/logs
+          }
+        shell: pwsh
+
+      - name: Build server for Windows
+        run: |
+          $env:GOOS="windows"
+          $env:GOARCH="amd64"
+          go build -o build/GophKeeper-windows/server.exe ./cmd/server
+        shell: pwsh
+
+      - name: Create server config file
+        run: |
+          $config = @"
+          server:
+            host: localhost
+            port: 8080
+          redis:
+            host: localhost
+            port: 6379
+            password: "my_redis_password"
+          db:
+            dsn: "postgres://postgres:root@localhost:5432"
+          "@
+          $config | Out-File -FilePath build/GophKeeper-windows/configs/config-server.yaml -Encoding utf8
+        shell: pwsh
+
+      - name: Build client for Windows
+        run: |
+          $env:GOOS="windows"
+          $env:GOARCH="amd64"
+          go build -o build/GophKeeper-windows/client.exe ./cmd/client
+        shell: pwsh
+
+      - name: Create client config file
+        run: |
+          echo "server:
+            host: localhost
+            port: 8080" > build/GophKeeper-windows/configs/config-client.yaml
+
+      - name: Create release directory
+        run: |
+          if (-Not (Test-Path -Path release)) {
+            New-Item -ItemType Directory -Path release
+          }
+        shell: pwsh
+
+      - name: Create ZIP archive for Windows
+        run: |
+          cd build
+          Compress-Archive -Path .\GophKeeper-windows -DestinationPath ..\release\GophKeeper-windows.zip
+        shell: pwsh
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-windows
+          path: release/GophKeeper-windows.zip
+
+      - name: Check build-windows success
+        if: failure()
+        run: echo "Build for Windows failed"
