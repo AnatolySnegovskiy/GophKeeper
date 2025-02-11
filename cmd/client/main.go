@@ -63,12 +63,11 @@ func (a *app) upClientGrpc() *client.GrpcClient {
 }
 
 func (a *app) stop() {
-	err := a.grpcClientConn.Close()
-	if err != nil {
+	if err := a.grpcClientConn.Close(); err != nil {
 		a.logger.Error(err.Error())
 	}
-	err = a.logFile.Close()
-	if err != nil {
+
+	if err := a.logFile.Close(); err != nil {
 		a.logger.Error(err.Error())
 	}
 }
